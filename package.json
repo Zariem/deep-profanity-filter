@@ -1,0 +1,32 @@
+{
+  "name": "deep-profanity-filter",
+  "version": "1.0.0",
+  "description": "A thorough profanity filter that considers most common circumventions. Works with your custom list of blocked and whitelisted words and phrases.",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Zariem/deep-profanity-filter.git"
+  },
+  "keywords": [
+    "profanity",
+    "filter",
+    "circumvention",
+    "censor"
+  ],
+  "author": "Zariem",
+  "license": "BSD-2-Clause",
+  "bugs": {
+    "url": "https://github.com/Zariem/deep-profanity-filter/issues"
+  },
+  "homepage": "https://github.com/Zariem/deep-profanity-filter#readme",
+  "devDependencies": {
+    "@types/jest": "^29.5.2",
+    "jest": "^29.5.0",
+    "ts-jest": "^29.1.0",
+    "typescript": "^5.1.3"
+  }
+}
