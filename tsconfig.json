@@ -1,8 +1,9 @@
 {
     "compilerOptions": {
         "outDir": "dist",
-        "lib": ["es2016"],
-        "sourceMap": true
+        "lib": ["es2021"],
+        "sourceMap": true,
+        "downlevelIteration": true,
     },
     "include": [
         "src/**/*.ts"

@@ -1,4 +1,2 @@
-export function hello(name: string): string {
-    return `Hello ${name}`;
-}
-  
+export * from './word_filter';
+export * from './wordlist_preprocessor';
