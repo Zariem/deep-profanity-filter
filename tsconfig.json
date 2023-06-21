@@ -4,6 +4,7 @@
         "lib": ["es2021"],
         "sourceMap": true,
         "downlevelIteration": true,
+        "declaration": true,
     },
     "include": [
         "src/**/*.ts"
