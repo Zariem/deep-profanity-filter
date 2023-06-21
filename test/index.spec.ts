@@ -224,68 +224,66 @@ test('remove accents', () => {
 });
 
 test('turn things to latin (speed test baseline)', () => {
-  expect(
-    textToLatin('')
-  ).toBe('');
+  expect(textToLatin('')).toBe('');
 });
 
 test('turn things to latin (speed test)', () => {
-  expect(
-    textToLatin('†hê qµï¢k ßrðwñ £ðx jµmþ§ ðvêr †hê låz¥ Ððg.')
-  ).toBe('the quick brown fox jumps over the lazy dog.');
+  expect(textToLatin('†hê qµï¢k ßrðwñ £ðx jµmþ§ ðvêr †hê låz¥ Ððg.')).toBe(
+    'the quick brown fox jumps over the lazy dog.',
+  );
 });
 
 test('turn things to latin (sanity test)', () => {
-  expect(
-    textToLatin('The quick brown fox jumps over the lazy dog.')
-  ).toBe('the quick brown fox jumps over the lazy dog.');
+  expect(textToLatin('The quick brown fox jumps over the lazy dog.')).toBe(
+    'the quick brown fox jumps over the lazy dog.',
+  );
 });
 
 test('turn things to latin', () => {
-  expect(
-    textToLatin('†hê qµï¢k ßrðwñ £ðx jµmþ§ ðvêr †hê låz¥ Ððg.')
-  ).toBe('the quick brown fox jumps over the lazy dog.');
-  expect(
-    textToLatin('тнє qυι¢к вяσωη ƒσχ נυмρѕ σνєя тнє ℓαzу ∂σg.')
-  ).toBe('the quick brown fox jumps over the lazy dog.');
-  expect(
-    textToLatin('ᏖᏂᏋ ᎤᏬᎥፈᏦ ᏰᏒᎧᏇᏁ ᎦᎧጀ ᏠᏬᎷᎮᏕ ᎧᏉᏋᏒ ᏖᏂᏋ ᏝᗩፚᎩ ᎴᎧᎶ.')
-  ).toBe('the quick brown fox jumps over the lazy dog.');
-  expect(
-    textToLatin('thē ๑นi¢k ๖r໐ຟຖ f໐x วน๓pŞ ໐งēr thē lคຊฯ ໓໐ງ.')
-  ).toBe('the quick brown fox jumps over the lazy dog.');
-  expect(
-    textToLatin('ⓣｈ乇 q𝐔ｉ¢Ҝ 乃𝐑๏𝔀Ⓝ ғόx 𝕁𝕦ϻᑭ𝐬 σ𝕧𝐞𝐑 тʰ€ Ļⓐž¥ 𝕕𝐨𝓖.')
-  ).toBe('the quick brown fox jumps over the lazy dog.');
-  expect(
-    textToLatin('𝕿𝖍𝖊 𝖖𝖚𝖎𝖈𝖐 𝖇𝖗𝖔𝖜𝖓 𝖋𝖔𝖝 𝖏𝖚𝖒𝖕𝖘 𝖔𝖛𝖊𝖗 𝖙𝖍𝖊 𝖑𝖆𝖟𝖞 𝖉𝖔𝖌.')
-  ).toBe('the quick brown fox jumps over the lazy dog.');
+  expect(textToLatin('†hê qµï¢k ßrðwñ £ðx jµmþ§ ðvêr †hê låz¥ Ððg.')).toBe(
+    'the quick brown fox jumps over the lazy dog.',
+  );
+  expect(textToLatin('тнє qυι¢к вяσωη ƒσχ נυмρѕ σνєя тнє ℓαzу ∂σg.')).toBe(
+    'the quick brown fox jumps over the lazy dog.',
+  );
+  expect(textToLatin('ᏖᏂᏋ ᎤᏬᎥፈᏦ ᏰᏒᎧᏇᏁ ᎦᎧጀ ᏠᏬᎷᎮᏕ ᎧᏉᏋᏒ ᏖᏂᏋ ᏝᗩፚᎩ ᎴᎧᎶ.')).toBe(
+    'the quick brown fox jumps over the lazy dog.',
+  );
+  expect(textToLatin('thē ๑นi¢k ๖r໐ຟຖ f໐x วน๓pŞ ໐งēr thē lคຊฯ ໓໐ງ.')).toBe(
+    'the quick brown fox jumps over the lazy dog.',
+  );
+  expect(textToLatin('ⓣｈ乇 q𝐔ｉ¢Ҝ 乃𝐑๏𝔀Ⓝ ғόx 𝕁𝕦ϻᑭ𝐬 σ𝕧𝐞𝐑 тʰ€ Ļⓐž¥ 𝕕𝐨𝓖.')).toBe(
+    'the quick brown fox jumps over the lazy dog.',
+  );
+  expect(textToLatin('𝕿𝖍𝖊 𝖖𝖚𝖎𝖈𝖐 𝖇𝖗𝖔𝖜𝖓 𝖋𝖔𝖝 𝖏𝖚𝖒𝖕𝖘 𝖔𝖛𝖊𝖗 𝖙𝖍𝖊 𝖑𝖆𝖟𝖞 𝖉𝖔𝖌.')).toBe(
+    'the quick brown fox jumps over the lazy dog.',
+  );
+
+  expect(textToLatin('T̵̫̖̱̭̝̟̪̺͇̓̎͛̉̅̂͘͜͝h̸̢̢̭͈̱̩͔̣̜́̈́̄̎e̷̛͓̞̠̮̝̩̘̤̅̌̽͊̋̋̍ ̷̜̞̳̳͇͚̺̗̺̌͆͂̎̅͆̇͌̐q̷̤͔̜̽̂͌̇͌̆͌u̷͈̤͍̻̞̿̀̍̀i̷͇͔͉̯͕͌̒̆̄ĉ̴̨̝̗̥̻̠̼̮̊͗̎͗̆͂̾̕k̵̢̬͖̥̘̬̠͖͕̣̓̽̃̈́̆̇̍͂͠ ̴̢̛̲́̋̋b̵̨̻̗̓̉͝r̷̛̛̻̳̠̆̀̋͗̈́o̴̢̧̦̘̹̹̣͎̠̔̓̊̐̌̈́͛͋̑͠w̴͓̝͖̗̽̍̀̈́̋̕n̸̼̰̅̋́͌͑͒̾̐͗̋ ̸̢̢͚̽̄f̸̧͍̤͘͘͜ͅơ̸̭̼̩̠̈́͑͆̉̔́x̴̢̣̘̻̪̘̮̌͗̓̑́̚͝ ̶͉̤̳̭͖̝̻̒̾͊̏̓̉j̶̡̱̭͉͗̽̈̕̕u̶̻̼͔̭̝̹͚̇͆̊m̶̡̖̲̪̞̹͍̟̈̈́͑̏̽̕͘p̷̖͍̒̽͊͠͝s̵̡͈͖̲̰͓̜͕͔̠̊̓̑͗͛̂͛̔̓ ̷̱͛̄͝o̶̞̘̱̱͊̈́́̀̓͑̀̀v̷̜͙̜͓̩̾̓̌̃̉̍̅̕ͅͅe̶̡̪̞̖̗͙̝͉̜͑ṟ̵͔̘̀̂͗̇̅̈͋̔̀ ̴͉̃̽̋t̸͉̄̇̈̅̌̃̎́̒ͅh̶̘̝͔͕̮͓̮̍̋̽̚e̶͓͌̈́͋͛͐͝ͅ ̵̤͈͉͖̥̎̍́l̷̦͕̙͓͒̍͋͠ā̴͎̤̎̂̃̎̂͂͝ẓ̶͓̏̾͝ÿ̸̨̻͍́́̓ ̸̘̈́̐͆̏d̷̡̨̟̣͍̝̲͕́̏̒ơ̷̩̘̘̂̋͋̃́͌͘g̴̟̥͇̗͓͑̽̉̕.̵̲̤̙̟͙̅̋͠')).toBe(
+    'the quick brown fox jumps over the lazy dog.',
+  );
+
+  expect(textToLatin(unEmoji('🆃🅷🅴 🆀🆄🅸🅲🅺 🅱🆁🅾🆆🅽 🅵🅾🆇 🅹🆄🅼🅿🆂 🅾🆅🅴🆁 🆃🅷🅴 🅻🅰🆉🆈 🅳🅾🅶.'))).toBe(
+    'the quick brown fox jumps over the lazy dog.',
+  );
+  expect(textToLatin('ₜₕₑ qᵤᵢcₖ bᵣₒwₙ fₒₓ ⱼᵤₘₚₛ ₒᵥₑᵣ ₜₕₑ ₗₐzy dₒg.')).toBe(
+    'the quick brown fox jumps over the lazy dog.',
+  );
+  expect(textToLatin('Ⓣⓗⓔ ⓠⓤⓘⓒⓚ ⓑⓡⓞⓦⓝ ⓕⓞⓧ ⓙⓤⓜⓟⓢ ⓞⓥⓔⓡ ⓣⓗⓔ ⓛⓐⓩⓨ ⓓⓞⓖ.')).toBe(
+    'the quick brown fox jumps over the lazy dog.',
+  );
+  expect(textToLatin('Tԋҽ ϙυιƈƙ Ⴆɾσɯɳ ϝσx ʝυɱρʂ σงҽɾ ƚԋҽ ʅαȥყ ԃσɠ.')).toBe(
+    'the quick brown fox jumps over the lazy dog.',
+  );
+  expect(textToLatin('𝕥𝓗𝔼 Ⓠ𝕦ｉĆＫ β𝓇σ𝕎ⓝ ＦⓞЖ 𝓙υｍ𝐏ｓ 𝓞𝓿𝐄Ř 𝓉Ħ€ 𝓁𝒶𝐙Ƴ ᗪỖق.')).toBe(
+    'the quick brown fox jumps over the lazy dog.',
+  );
+  expect(textToLatin('Ｔｈｅ　ｑｕｉｃｋ　ｂｒｏｗｎ　ｆｏｘ　ｊｕｍｐｓ　ｏｖｅｒ　ｔｈｅ　ｌａｚｙ　ｄｏｇ.')).toBe(
+    'the　quick　brown　fox　jumps　over　the　lazy　dog.',
+  );
 
   expect(
-    textToLatin('T̵̫̖̱̭̝̟̪̺͇̓̎͛̉̅̂͘͜͝h̸̢̢̭͈̱̩͔̣̜́̈́̄̎e̷̛͓̞̠̮̝̩̘̤̅̌̽͊̋̋̍ ̷̜̞̳̳͇͚̺̗̺̌͆͂̎̅͆̇͌̐q̷̤͔̜̽̂͌̇͌̆͌u̷͈̤͍̻̞̿̀̍̀i̷͇͔͉̯͕͌̒̆̄ĉ̴̨̝̗̥̻̠̼̮̊͗̎͗̆͂̾̕k̵̢̬͖̥̘̬̠͖͕̣̓̽̃̈́̆̇̍͂͠ ̴̢̛̲́̋̋b̵̨̻̗̓̉͝r̷̛̛̻̳̠̆̀̋͗̈́o̴̢̧̦̘̹̹̣͎̠̔̓̊̐̌̈́͛͋̑͠w̴͓̝͖̗̽̍̀̈́̋̕n̸̼̰̅̋́͌͑͒̾̐͗̋ ̸̢̢͚̽̄f̸̧͍̤͘͘͜ͅơ̸̭̼̩̠̈́͑͆̉̔́x̴̢̣̘̻̪̘̮̌͗̓̑́̚͝ ̶͉̤̳̭͖̝̻̒̾͊̏̓̉j̶̡̱̭͉͗̽̈̕̕u̶̻̼͔̭̝̹͚̇͆̊m̶̡̖̲̪̞̹͍̟̈̈́͑̏̽̕͘p̷̖͍̒̽͊͠͝s̵̡͈͖̲̰͓̜͕͔̠̊̓̑͗͛̂͛̔̓ ̷̱͛̄͝o̶̞̘̱̱͊̈́́̀̓͑̀̀v̷̜͙̜͓̩̾̓̌̃̉̍̅̕ͅͅe̶̡̪̞̖̗͙̝͉̜͑ṟ̵͔̘̀̂͗̇̅̈͋̔̀ ̴͉̃̽̋t̸͉̄̇̈̅̌̃̎́̒ͅh̶̘̝͔͕̮͓̮̍̋̽̚e̶͓͌̈́͋͛͐͝ͅ ̵̤͈͉͖̥̎̍́l̷̦͕̙͓͒̍͋͠ā̴͎̤̎̂̃̎̂͂͝ẓ̶͓̏̾͝ÿ̸̨̻͍́́̓ ̸̘̈́̐͆̏d̷̡̨̟̣͍̝̲͕́̏̒ơ̷̩̘̘̂̋͋̃́͌͘g̴̟̥͇̗͓͑̽̉̕.̵̲̤̙̟͙̅̋͠')
-  ).toBe('the quick brown fox jumps over the lazy dog.');
-
-  expect(
-    textToLatin(unEmoji('🆃🅷🅴 🆀🆄🅸🅲🅺 🅱🆁🅾🆆🅽 🅵🅾🆇 🅹🆄🅼🅿🆂 🅾🆅🅴🆁 🆃🅷🅴 🅻🅰🆉🆈 🅳🅾🅶.'))
-  ).toBe('the quick brown fox jumps over the lazy dog.');
-  expect(
-    textToLatin('ₜₕₑ qᵤᵢcₖ bᵣₒwₙ fₒₓ ⱼᵤₘₚₛ ₒᵥₑᵣ ₜₕₑ ₗₐzy dₒg.')
-  ).toBe('the quick brown fox jumps over the lazy dog.');
-  expect(
-    textToLatin('Ⓣⓗⓔ ⓠⓤⓘⓒⓚ ⓑⓡⓞⓦⓝ ⓕⓞⓧ ⓙⓤⓜⓟⓢ ⓞⓥⓔⓡ ⓣⓗⓔ ⓛⓐⓩⓨ ⓓⓞⓖ.')
-  ).toBe('the quick brown fox jumps over the lazy dog.');
-  expect(
-    textToLatin('Tԋҽ ϙυιƈƙ Ⴆɾσɯɳ ϝσx ʝυɱρʂ σงҽɾ ƚԋҽ ʅαȥყ ԃσɠ.')
-  ).toBe('the quick brown fox jumps over the lazy dog.');
-  expect(
-    textToLatin('𝕥𝓗𝔼 Ⓠ𝕦ｉĆＫ β𝓇σ𝕎ⓝ ＦⓞЖ 𝓙υｍ𝐏ｓ 𝓞𝓿𝐄Ř 𝓉Ħ€ 𝓁𝒶𝐙Ƴ ᗪỖق.')
-  ).toBe('the quick brown fox jumps over the lazy dog.');
-  expect(
-    textToLatin('Ｔｈｅ　ｑｕｉｃｋ　ｂｒｏｗｎ　ｆｏｘ　ｊｕｍｐｓ　ｏｖｅｒ　ｔｈｅ　ｌａｚｙ　ｄｏｇ.')
-  ).toBe('the　quick　brown　fox　jumps　over　the　lazy　dog.');
-
-  expect(
-    textToLatin(unEmoji(
+    textToLatin(
       '𝔞𝔟𝔠𝔡𝔢𝔣𝔤𝔥𝔦𝔧𝔨𝔩𝔪𝔫𝔬𝔭𝔮𝔯𝔰𝔱𝔲𝔳𝔴𝔵𝔶𝔷𝔄𝔅ℭ𝔇𝔈𝔉𝔊ℌℑ𝔍𝔎𝔏𝔐𝔑𝔒𝔓𝔔ℜ𝔖𝔗𝔘𝔙𝔚𝔛𝔜ℨ𝖆𝖇𝖈𝖉𝖊𝖋𝖌𝖍𝖎𝖏𝖐𝖑𝖒𝖓𝖔𝖕𝖖𝖗𝖘𝖙𝖚𝖛𝖜𝖝𝖞𝖟' +
         '𝕬𝕭𝕮𝕯𝕰𝕱𝕲𝕳𝕴𝕵𝕶𝕷𝕸𝕹𝕺𝕻𝕼𝕽𝕾𝕿𝖀𝖁𝖂𝖃𝖄𝖅𝓪𝓫𝓬𝓭𝓮𝓯𝓰𝓱𝓲𝓳𝓴𝓵𝓶𝓷𝓸𝓹𝓺𝓻𝓼𝓽𝓾𝓿𝔀𝔁𝔂𝔃𝓐𝓑𝓒𝓓𝓔𝓕𝓖𝓗𝓘𝓙𝓚𝓛𝓜𝓝𝓞𝓟𝓠𝓡𝓢𝓣𝓤𝓥𝓦𝓧𝓨𝓩' +
         '𝒶𝒷𝒸𝒹𝑒𝒻𝑔𝒽𝒾𝒿𝓀𝓁𝓂𝓃𝑜𝓅𝓆𝓇𝓈𝓉𝓊𝓋𝓌𝓍𝓎𝓏𝒜𝐵𝒞𝒟𝐸𝐹𝒢𝐻𝐼𝒥𝒦𝐿𝑀𝒩𝒪𝒫𝒬𝑅𝒮𝒯𝒰𝒱𝒲𝒳𝒴𝒵𝕒𝕓𝕔𝕕𝕖𝕗𝕘𝕙𝕚𝕛𝕜𝕝𝕞𝕟𝕠𝕡𝕢𝕣𝕤𝕥𝕦𝕧𝕨𝕩𝕪𝕫' +
@@ -312,6 +310,6 @@ test('turn things to latin', () => {
         'ᗩᗷᑕᗪEᖴGᕼIᒍKᒪᗰᑎOᑭᑫᖇᔕTᑌᐯᗯ᙭YᘔᗩᗷᑢᕲᘿᖴᘜᕼᓰᒚᖽᐸᒪᘻᘉᓍᕵᕴᖇSᖶᑘᐺᘺ᙭ᖻᗱᗩᗷᑢᕲᘿᖴᘜᕼᓰᒚᖽᐸᒪᘻᘉᓍᕵᕴᖇSᖶᑘᐺᘺ᙭ᖻᗱa̶b̶c̶d̶e̶f̶g̶h̶i̶j̶k̶l̶m̶n̶o̶p̶q̶r̶s̶t̶u̶v̶w̶x̶y̶z̶̶' +
         'A̶B̶C̶D̶E̶F̶G̶H̶I̶J̶K̶L̶M̶N̶O̶P̶Q̶R̶S̶T̶U̶V̶W̶X̶Y̶Z̶a̴b̴c̴d̴e̴f̴g̴h̴i̴j̴k̴l̴m̴n̴o̴p̴q̴r̴s̴t̴u̴v̴w̴x̴y̴z̴̴A̴B̴C̴D̴E̴F̴G̴H̴I̴J̴K̴L̴M̴N̴O̴P̴Q̴R̴S̴T̴U̴V̴W̴X̴Y̴Z̴a̷b̷c̷d̷e̷f̷g̷h̷i̷j̷k̷l̷m̷n̷o̷p̷q̷r̷s̷t̷u̷v̷w̷x̷y̷z̷̷A̷B̷C̷D̷E̷F̷G̷H̷I̷J̷K̷L̷M̷N̷O̷P̷Q̷R̷S̷T̷U̷V̷W̷X̷Y̷Z̷' +
         'a̲b̲c̲d̲e̲f̲g̲h̲i̲j̲k̲l̲m̲n̲o̲p̲q̲r̲s̲t̲u̲v̲w̲x̲y̲z̲̲A̲B̲C̲D̲E̲F̲G̲H̲I̲J̲K̲L̲M̲N̲O̲P̲Q̲R̲S̲T̲U̲V̲W̲X̲Y̲Z̲',
-    )).replace(/[a-zA-Z]/g, ''),
+    ).replace(/[a-zA-Z]/g, ''),
   ).toBe('');
 });

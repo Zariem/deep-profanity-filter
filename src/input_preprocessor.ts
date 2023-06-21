@@ -97,6 +97,7 @@ export function removeTextAccents(inputText: string): string {
  */
 export function textToLatin(inputText: string): string {
   inputText = removeTextAccents(inputText);
+  inputText = unEmoji(inputText);
   // replace upper case letters that look different in lower case
   inputText = inputText
     .replace(/Ð/g, 'd')
