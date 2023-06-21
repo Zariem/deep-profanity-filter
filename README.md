@@ -265,3 +265,5 @@ If you find a better solution to handle apostrophes, contact me.
 # Where to Find Word Lists
 You may notice that there is no word list provided with this tool. It is designed to be flexible enough for you to build your own list, or to take provided lists from the internet. The wildcards work the same as Discord's AutoMod handles them, so if you're looking for a general profanity filter word list, you can start searching for lists for that.
 As this tool handles a lot of circumvention cases, be aware that you can reduce your lists to normal words and a few alternate spelling variations, but common circumventions such as `a.d.d.i.n.g` dots or dashes between the characters is unnecessary with this tool, as it already parses for this content.
+
+If you've read until here, thanks! You're a champ! If you like this library (and can spare a coin) consider to [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/B0B0MH76V)
