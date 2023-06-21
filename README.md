@@ -1,8 +1,11 @@
 # deep-profanity-filter
+
 A thorough profanity filter that considers most common circumventions.
 Works with your custom list of blocked and whitelisted words and phrases.
 Allows preprocessing input strings to latinise many fancy unicode alphabets.
 
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/B0B0MH76V)
 ## Installation
 `npm install deep-profanity-filter`
 
