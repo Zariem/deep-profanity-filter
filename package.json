@@ -1,6 +1,6 @@
 {
   "name": "deep-profanity-filter",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A thorough profanity filter that considers most common circumventions. Works with your custom list of blocked and whitelisted words and phrases.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
