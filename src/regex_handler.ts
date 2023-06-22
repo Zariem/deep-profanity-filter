@@ -84,8 +84,9 @@ export const getCircumventionRegExp = (badwordComponents: WordRegexComponents) =
   return new RegExp(
     badwordComponents.start +
       badwordComponents.word
-        .replaceAll('', oneOrMoreNonWordCharacters)
-        .replaceAll(nonWordCharsAtEndsOfString, '')
+        .split('')
+        .join(oneOrMoreNonWordCharacters)
+        .replace(nonWordCharsAtEndsOfString, '')
         .replace(nonWordCharactersWithSpaceBetween, oneOrMoreNonWordCharacters) +
       badwordComponents.end,
     'g',

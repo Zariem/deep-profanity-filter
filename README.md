@@ -26,6 +26,8 @@ In the following section there will first be an explanation on how to do these t
 ### Setting Up a List of Words
 ```js
 import { preprocessWordLists } from 'deep-profanity-filter';
+// alternatively: const ProfanityFilter = require('deep-profanity-filter');
+// and then use functions with: ProfanityFilter.preprocessWordLists(...)
 
 let badwords = ['kitty', 'hell*', '*word*', 'ban ananas'] // example
 let whitelist = ['hello kitty', 'hello*', 'ban ananas juice', 'keyword', 'loanword*', '*sword*', '*wording'] // example
