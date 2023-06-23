@@ -52,6 +52,12 @@ export type ProcessedWordLists = {
  * those bad words which are contained in this whitelisted word).
  * This is used in the filtering algorithms.
  *
+ * IMPORTANT: If you wish to match a backslash `\` character in any bad word,
+ * you will always need to escape it. Trying to detect someone entering
+ * `¯\_(ツ)_/¯` would mean your bad word would need to be `¯\\_(ツ)_/¯`.
+ * If you allow others to define bad word inputs, always sanitise strings
+ * containing backslashes by replacing them with two backslashes.
+ *
  * @param badwords - an array of bad words or phrases that are being
  * checked in the texts that we filter
  * @param whitelist - an array of whitelisted words or phrases that
@@ -86,6 +92,9 @@ export const preprocessWordLists = (
   const badWordData: BadWordData[] = [];
   const whitelistMap: WhitelistMap = {}; // map from badword -> [goodwords] (array of good word data)
   for (const badword of badwords) {
+    if (badword === '') {
+      continue;
+    }
     const badWordComponents = getRegExpComponents(badword);
     const badwordRegexp = getNormalRegExp(badWordComponents);
 
@@ -102,6 +111,9 @@ export const preprocessWordLists = (
     });
 
     for (const goodword of whitelist) {
+      if (goodword === '') {
+        continue;
+      }
       if (goodword.match(badwordRegexp)) {
         const goodwordComponents = getRegExpComponents(goodword);
         const data = {

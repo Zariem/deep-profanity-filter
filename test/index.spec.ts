@@ -1,8 +1,21 @@
 import { preprocessWordLists, doesContainBadWords, unEmoji, removeTextAccents, textToLatin } from '../src';
+import { escapeStringForRegex } from '../src/regex_handler';
 
-const badwords = ['kitty', 'hell*', '*word*', 'ban ananas'];
+const badwords = [
+  'kitty',
+  'hell*',
+  '*word*',
+  'ban ananas',
+  '*this.is/a_link*',
+  'link.co/',
+  'a$$hole',
+  '¯\\_(ツ)_/¯',
+  '/(?:a)?fake(.)*regex$/',
+];
 const goodwords = ['hello kitty', 'hello*', 'ban ananas juice', 'keyword', 'loanword*', '*sword*', '*wording'];
 const baplist = preprocessWordLists(badwords, goodwords);
+
+console.log(baplist);
 
 const baplistVar1 = preprocessWordLists(badwords, goodwords, false, true);
 const baplistVar2 = preprocessWordLists(badwords, goodwords, true, false);
@@ -210,6 +223,44 @@ test('word with two *wildcards*', () => {
   expect(doesContainBadWords('swordfish', baplist)).toEqual(false); // whitelisted
   expect(doesContainBadWords('longsword', baplist)).toEqual(false); // whitelisted
   expect(doesContainBadWords('miswordings', baplist)).toEqual(false); // whitelisted *sword*
+});
+
+test('filter a link', () => {
+  expect(doesContainBadWords('this.is/a_link', baplist)).toEqual(true);
+  expect(doesContainBadWords('linkaco/', baplist)).toEqual(false);
+  expect(doesContainBadWords('link.co/', baplist)).toEqual(true);
+  expect(doesContainBadWords('this.is/a_link_somewhere', baplist)).toEqual(true);
+  expect(doesContainBadWords('this.is\\/a_link_somewhere', baplist)).toEqual(false);
+  expect(doesContainBadWords('www.this.is/a_link', baplist)).toEqual(true);
+  expect(doesContainBadWords('www.this.is/a_linksomewhere', baplist)).toEqual(true);
+  expect(doesContainBadWords('this%is/a_li_nk', baplist)).toEqual(false);
+  expect(doesContainBadWords('t-h_i_s?.!i@s / a _ l i n k somewhere', baplist)).toEqual(true);
+  expect(doesContainBadWords('t h i s . i s / a _ l i n k', baplist)).toEqual(true);
+  expect(doesContainBadWords('t-h_i_s?.!i@s / a _ l i n k', baplist)).toEqual(true);
+});
+
+test('correctly filter words with special characters', () => {
+  expect(doesContainBadWords('a$$hole', baplist)).toEqual(true);
+  expect(doesContainBadWords('¯\\_(ツ)_/¯', baplist)).toEqual(true);
+  expect(doesContainBadWords('¯_(ツ)_/¯', baplist)).toEqual(false);
+  expect(doesContainBadWords('/(?:a)?fake(.)*regex$/', baplist)).toEqual(true);
+  expect(doesContainBadWords('/(?: a)?fake(.)*regex$/', baplist)).toEqual(false);
+  expect(doesContainBadWords('/ ( ? : a ) ? f a k e ( . ) * r e g e x $ /', baplist)).toEqual(true);
+  expect(doesContainBadWords('/ ( ? :   a ) ? f  a --k ~e (...) * r e g e  x $ /', baplist)).toEqual(true);
+  expect(doesContainBadWords('fakeregex', baplist)).toEqual(false);
+  expect(doesContainBadWords('afakeregex', baplist)).toEqual(false);
+  expect(doesContainBadWords('afakexxxregex', baplist)).toEqual(false);
+  expect(doesContainBadWords('afakexxxregexa', baplist)).toEqual(false);
+});
+
+test('escape strings for regular expression', () => {
+  expect(escapeStringForRegex('is it escaped? \\ ^ $ * + ? . ( ) | { } [ ]')).toBe(
+    'is it escaped\\? \\\\ \\^ \\$ \\* \\+ \\? \\. \\( \\) \\| \\{ \\} \\[ \\]',
+  );
+});
+
+test('create regex', () => {
+  expect(new RegExp(escapeStringForRegex('¯\\_(ツ)_/¯'))).toStrictEqual(/¯\\_\(ツ\)_\/¯/);
 });
 
 test('replace emojis', () => {

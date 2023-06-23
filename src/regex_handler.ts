@@ -13,6 +13,44 @@ const wordBoundary = '\\b';
 // regular expressions to clean up strings used to build regular expressions
 const nonWordCharsAtEndsOfString = /^\[\\W\_\]\+|\[\\W\_\]\+$/g; // identify the "non-word-characters" at the start or end of a string
 const nonWordCharactersWithSpaceBetween = /\[\\W\_\]\+\s+\[\\W\_\]\+/g; // identify when two "non-word-characters" surround somes whitespace
+const nonWordCharsAfterEscapeSlash = /\\\[\\W\_\]\+{1}/g; // identify the "non-word-characters interjected between escaped characters"
+
+/**
+ * For a character that is either a wildcard `*`, a letter `[a-zA-Z]` or anything else,
+ * return a regular expression that matches either anything (for a wildcard), any word
+ * boundary (for a letter), or any whitespace or start/end of string for all remaining cases.
+ *
+ * @param inputCharacter A string with a single character.
+ * @param atStart Whether the character given was at the start or end of the string.
+ * @returns a string used to build a regular expression
+ */
+const getRegExpComponentCharacter = (inputCharacter: string, atStart: boolean) => {
+  if (inputCharacter === '*') {
+    // match anything after wildcard characters
+    return '';
+  }
+  if (inputCharacter.match(/[\W_]/g)) {
+    // non-word character at start of search term: positive lookbehind for any whitespace or start of string
+    // non-word character at end of search term: positive lookahead for any whitespace or end of string
+    return atStart ? '(?<=^|\\s)' : '(?=\\s|$)';
+  }
+  // match a word boundery after word characters
+  return wordBoundary;
+};
+
+/**
+ * Escape a string so that we can build a `new RegExp(...)` with it and preserve
+ * any special characters within the string, such as `. * + ? ^ $ { } ( ) [ ] \\ /`
+ * and still match them properly. If you wish to match a singular backslash `\`
+ * literally, make sure that in your badwordlist or whitelist, as well as in your
+ * string that you are testing against, the backslash is escaped by replacing it
+ * with `\\`.
+ * @param inputString - The string you wish to escape for creating a regular expression.
+ * @returns The escaped string that can be used in `new RegExp(...)`
+ */
+export const escapeStringForRegex = (inputString: string) => {
+  return inputString.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+};
 
 /**
  * Splits up a word that has optional wildcards '*' at its start or end.
@@ -23,13 +61,16 @@ const nonWordCharactersWithSpaceBetween = /\[\\W\_\]\+\s+\[\\W\_\]\+/g; // ident
  * @param {string} badword - The bad word to split into its components.
  * @returns An object with the components accessible as obj.start, obj.word and obj.end
  */
-export const getRegExpComponents = (badword): WordRegexComponents => {
+export const getRegExpComponents = (badword: string): WordRegexComponents => {
+  if (badword === '') {
+    return { start: '', word: '', end: '' };
+  }
   const sliceStart = badword.startsWith('*') ? 1 : 0; // if there's a * at the start, remove it
   const sliceEnd = badword.endsWith('*') ? -1 : undefined; // if there's a * at the end, remove it
   return {
-    start: badword.startsWith('*') ? '' : wordBoundary,
-    word: badword.slice(sliceStart, sliceEnd),
-    end: badword.endsWith('*') ? '' : wordBoundary,
+    start: getRegExpComponentCharacter(badword[0], true),
+    word: escapeStringForRegex(badword.slice(sliceStart, sliceEnd)),
+    end: getRegExpComponentCharacter(badword[badword.length - 1], false),
   };
 };
 
@@ -87,6 +128,7 @@ export const getCircumventionRegExp = (badwordComponents: WordRegexComponents) =
         .split('')
         .join(oneOrMoreNonWordCharacters)
         .replace(nonWordCharsAtEndsOfString, '')
+        .replace(nonWordCharsAfterEscapeSlash, '\\')
         .replace(nonWordCharactersWithSpaceBetween, oneOrMoreNonWordCharacters) +
       badwordComponents.end,
     'g',
