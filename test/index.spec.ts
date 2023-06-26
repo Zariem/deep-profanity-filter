@@ -17,9 +17,14 @@ const baplist = preprocessWordLists(badwords, goodwords);
 
 console.log(baplist);
 
-const baplistVar1 = preprocessWordLists(badwords, goodwords, false, true);
-const baplistVar2 = preprocessWordLists(badwords, goodwords, true, false);
-const baplistVar3 = preprocessWordLists(badwords, goodwords, false, false);
+const baplistExact = preprocessWordLists(badwords, goodwords, { checkCircumventions: false });
+
+const baplistVar1 = preprocessWordLists(badwords, goodwords, { considerPrecedingApostrophes: false });
+const baplistVar2 = preprocessWordLists(badwords, goodwords, { considerFollowUpApostrophes: false });
+const baplistVar3 = preprocessWordLists(badwords, goodwords, {
+  considerPrecedingApostrophes: false,
+  considerFollowUpApostrophes: false,
+});
 
 test('filter standalone bad word', () => {
   expect(doesContainBadWords('kitty', baplist)).toEqual(true);
@@ -62,6 +67,14 @@ test("spaces between some but not all characters don't bap", () => {
   expect(doesContainBadWords('k it ty', baplist)).toEqual(false);
 });
 
+test('special character between some but not all characters', () => {
+  expect(doesContainBadWords('k+itty', baplist)).toEqual(true);
+  expect(doesContainBadWords('ki.tty', baplist)).toEqual(true);
+  expect(doesContainBadWords('kit-ty', baplist)).toEqual(true);
+  expect(doesContainBadWords('kitt~y', baplist)).toEqual(true);
+  expect(doesContainBadWords('k&it_ty', baplist)).toEqual(true);
+});
+
 test("whitelisted phrase 'hello kitty'", () => {
   expect(doesContainBadWords('hello kitty', baplist)).toEqual(false);
   expect(doesContainBadWords('kitty hello kitty hello', baplist)).toEqual(true); // not all whitelisted
@@ -91,6 +104,29 @@ test("spaced out character don't work if another spaced character follows", () =
   expect(doesContainBadWords('a k i t t y', baplist)).toEqual(false);
   expect(doesContainBadWords('l e      k i  t  t  y', baplist)).toEqual(false);
   expect(doesContainBadWords('k i t t y s', baplist)).toEqual(false);
+});
+
+test('checking only exact matches', () => {
+  expect(doesContainBadWords('.kitty.', baplistExact)).toEqual(true);
+  expect(doesContainBadWords('||kitty||', baplistExact)).toEqual(true);
+  expect(doesContainBadWords('kitty cat', baplistExact)).toEqual(true);
+  expect(doesContainBadWords('kitty-cat', baplistExact)).toEqual(true);
+  expect(doesContainBadWords('kitty!cat', baplistExact)).toEqual(true);
+  expect(doesContainBadWords('kitty^cat', baplistExact)).toEqual(true);
+  expect(doesContainBadWords('kitty/cat', baplistExact)).toEqual(true);
+  expect(doesContainBadWords('cute kitty', baplistExact)).toEqual(true);
+  expect(doesContainBadWords('cute-kitty', baplistExact)).toEqual(true);
+
+  expect(doesContainBadWords('k+itty', baplistExact)).toEqual(false);
+  expect(doesContainBadWords('ki.tty', baplistExact)).toEqual(false);
+  expect(doesContainBadWords('kit-ty', baplistExact)).toEqual(false);
+  expect(doesContainBadWords('kitt~y', baplistExact)).toEqual(false);
+  expect(doesContainBadWords('k&it_ty', baplistExact)).toEqual(false);
+
+  expect(doesContainBadWords('k i t t y', baplistExact)).toEqual(false);
+  expect(doesContainBadWords('k   i  t t  y', baplistExact)).toEqual(false);
+  expect(doesContainBadWords('k-i-t-t-y', baplistExact)).toEqual(false);
+  expect(doesContainBadWords("k.i-t't%y", baplistExact)).toEqual(false);
 });
 
 test('apostrophe handling', () => {

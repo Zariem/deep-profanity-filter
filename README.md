@@ -35,13 +35,26 @@ let whitelist = ['hello kitty', 'hello*', 'ban ananas juice', 'keyword', 'loanwo
 // This wordFilter is what we use to then test any input string with
 let wordFilter = preprocessWordLists(badwords, whitelist);
 ```
-Alternately, you can also change some fine-tuned settings on how to handle apostrophes in `s p a c e d` content. You can read up on the implications of these in this readme. For filtering English content, it is recommended to leave both values on their defaults. For other languages you may benefit from setting one or both value to false.
+Alternately, you can also change some fine-tuned settings, such as:
+- whether to check for circumventions (default: `true`) or only for exact matches of the word. In the case of checking for links or content such as `¯\_(ツ)_/¯`, it makes sense to only check the exact match.
+- how to handle apostrophes in `s p a c e d` content. You can read up on the implications of these further down in this readme. For filtering English content, it is recommended to leave both values on their defaults. For other languages you may benefit from setting one or both value to false.
 ```js
-const considerPrecedingApostrophes = false; // per default it's set to true
-const considerFollowUpApostrophes = false; // per default it's set to true
-let wordFilter = preprocessWordLists(badwords, whitelist,
-	considerPrecedingApostrophes, considerFollowUpApostrophes);
+let wordFilter = preprocessWordLists(badwords, whitelist, {
+	checkCircumventions: false, // per default it's set to true
+}
+									 
+let wordFilter2 = preprocessWordLists(badwords, whitelist, {
+	considerPrecedingApostrophes: false, // per default it's set to true
+	considerFollowUpApostrophes: false, // per default it's set to true
+}
+
+let wordFilter3 = preprocessWordLists(badwords, whitelist, {
+	considerFollowUpApostrophes: false, // per default it's set to true
+}
 ```
+**Note**: While you can set all of these values at the same time, `considerPrecedingApostrophes` and `considerFollowUpApostrophes` only have an effect on circumvented variations of the word, so if you set `checkCircumventions` to false, setting the apostrophe handling is redundant.
+
+**Note**: Since these settings apply to a whole list of words, it makes sense to treat content such as links in its own word list and check any input against both word lists separately.
 
 ### Changing The Word Lists
 ```js
@@ -132,7 +145,9 @@ Without wildcards, it will match words only when the full word is properly disti
 `kitty`, `-kitty`, `kitty-`, `-kitty-`, `.kitty`, `||kitty||` , `kitty cat`, `cute kitty`, etc.
 - The word, separated by non-spaces to other words, such as:
 `cute-kitty`, `cute/kitty`, `kitty!cat`, `cute%kitty_cat`, etc.
-- The word, with all characters spaced out by either spaces or special characters, such as:
+- **If circumventions are being checked**: the word, with some characters separated by non-whitespace non-alphabet characters, such as:
+`k+itty`, `ki.tty`, `kit-ty`, `kitt~y`, `k&it_ty`, etc.
+- **If circumventions are being checked**: the word, with all characters spaced out by either spaces or special characters, such as:
 `k i t t y`, `k    i...t_ t - y`, `'k-i-t-t-y'`, `k.i.t.t.y`, `cute k i t t y`, `k-i-t-t-y cat`, etc.
 
 The following variations however, will not consider it a standalone word and **__not__** recognise it:

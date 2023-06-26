@@ -116,23 +116,30 @@ export const hasBadWord = (
  */
 export const doesContainBadWords = (inputString: string, processedWordLists: ProcessedWordLists) => {
   for (const badwordData of processedWordLists.badWordData) {
-    // first try to match the word with its special characters, as they could
+    // if we check for an exact match
+    // try to match the word with its special characters, as they could
     // form word boundaries, such as in "test-kitty-word".
     if (hasBadWord(inputString, badwordData, processedWordLists.whitelistMap, false)) {
       return true;
     }
 
-    // then try removing all special characters from the input string
-    // and match it against the word itself, with word boundaries.
-    const reducedInput = inputString.replace(/[^a-zA-Z0-9\s]/g, '');
-    if (reducedInput !== inputString && hasBadWord(reducedInput, badwordData, processedWordLists.whitelistMap, false)) {
-      return true;
-    }
+    // if we are checking circumventions at all
+    if (badwordData.strictRegexp !== undefined) {
+      // try removing all special characters from the input string
+      // and match it against the word itself, with word boundaries.
+      const reducedInput = inputString.replace(/[^a-zA-Z0-9\s]/g, '');
+      if (
+        reducedInput !== inputString &&
+        hasBadWord(reducedInput, badwordData, processedWordLists.whitelistMap, false)
+      ) {
+        return true;
+      }
 
-    // finally try to match the word with common circumventions, such as
-    // "bad k i t t y" while ensuring words such as "k i t t y c a t" are considered bad.
-    if (hasBadWord(inputString, badwordData, processedWordLists.whitelistMap, true)) {
-      return true;
+      // finally try to match the word with common circumventions, such as
+      // "bad k i t t y" while ensuring words such as "k i t t y c a t" are considered bad.
+      if (hasBadWord(inputString, badwordData, processedWordLists.whitelistMap, true)) {
+        return true;
+      }
     }
   }
 
