@@ -1,5 +1,20 @@
-import { preprocessWordLists, doesContainBadWords, unEmoji, removeTextAccents, textToLatin } from '../src';
+import {
+  preprocessWordLists,
+  doesContainBadWords,
+  unEmoji,
+  removeTextAccents,
+  textToLatin,
+  findAnyBadWord,
+  findAllBadWords,
+  getBadWords,
+  findBadWordLocations,
+  replaceBadWords,
+  WordReplacementMethod,
+  WordReplacementType,
+  censorText,
+} from '../src';
 import { escapeStringForRegex } from '../src/regex_handler';
+import { grawlix } from '../src/replace_input';
 
 const badwords = [
   'kitty',
@@ -297,6 +312,234 @@ test('escape strings for regular expression', () => {
 
 test('create regex', () => {
   expect(new RegExp(escapeStringForRegex('¯\\_(ツ)_/¯'))).toStrictEqual(/¯\\_\(ツ\)_\/¯/);
+});
+
+test('finding any bad word in the input', () => {
+  expect(findAnyBadWord('kitty', baplist)).toEqual('kitty');
+  expect(findAnyBadWord('hell', baplist)).toEqual('hell*');
+  expect(findAnyBadWord('word', baplist)).toEqual('*word*');
+  expect(findAnyBadWord('ban ananas', baplist)).toEqual('ban ananas');
+  expect(findAnyBadWord('hello kitty', baplist)).toBeUndefined();
+  expect(findAnyBadWord('blabla', baplist)).toBeUndefined();
+  expect(['kitty', 'hell*']).toContain(findAnyBadWord('hell kitty', baplist));
+  expect(['hell*', 'ban ananas', 'kitty', '*word*']).toContain(
+    findAnyBadWord('ban ananas keywords hellfish k&it_ty', baplist),
+  );
+});
+
+test('finding all bad words in the input', () => {
+  expect(findAllBadWords('kitty', baplist)).toEqual(['kitty']);
+  expect(findAllBadWords('hell', baplist)).toEqual(['hell*']);
+  expect(findAllBadWords('word', baplist)).toEqual(['*word*']);
+  expect(findAllBadWords('ban ananas', baplist)).toEqual(['ban ananas']);
+  expect(findAllBadWords('hello kitty', baplist)).toEqual([]);
+  expect(findAllBadWords('blabla', baplist)).toEqual([]);
+  expect(findAllBadWords('blabla', baplist)).toHaveLength(0);
+  expect(findAllBadWords('hell kitty', baplist)).toContain('hell*');
+  expect(findAllBadWords('hell kitty', baplist)).toContain('kitty');
+  expect(findAllBadWords('hell kitty', baplist)).toHaveLength(2);
+  expect(findAllBadWords('ban ananas keywords hellfish k&it_ty', baplist)).toContain('kitty');
+  expect(findAllBadWords('ban ananas keywords hellfish k&it_ty', baplist)).toContain('hell*');
+  expect(findAllBadWords('ban ananas keywords hellfish k&it_ty', baplist)).toContain('ban ananas');
+  expect(findAllBadWords('ban ananas keywords hellfish k&it_ty', baplist)).toContain('*word*');
+  expect(findAllBadWords('ban ananas keywords hellfish k&it_ty', baplist)).toHaveLength(4);
+});
+
+test('finding bad words through its locations', () => {
+  expect(getBadWords(findBadWordLocations('kitty', baplist))).toEqual(findAllBadWords('kitty', baplist));
+  expect(getBadWords(findBadWordLocations('hell', baplist))).toEqual(findAllBadWords('hell', baplist));
+  expect(getBadWords(findBadWordLocations('hello kitty', baplist))).toEqual(findAllBadWords('hello kitty', baplist));
+  expect(getBadWords(findBadWordLocations('blabla', baplist))).toEqual(findAllBadWords('blabla', baplist));
+  expect(getBadWords(findBadWordLocations('hell kitty', baplist))).toEqual(findAllBadWords('hell kitty', baplist));
+  expect(getBadWords(findBadWordLocations('ban ananas keywords hellfish k&it_ty', baplist))).toEqual(
+    findAllBadWords('ban ananas keywords hellfish k&it_ty', baplist),
+  );
+});
+
+test('replace bad words with grawlix', () => {
+  expect(replaceBadWords('kitty', findBadWordLocations('kitty', baplist))).toEqual(grawlix('kitty'));
+  expect(replaceBadWords('hell', findBadWordLocations('hell', baplist))).toEqual(grawlix('hell'));
+  expect(replaceBadWords('ban ananas', findBadWordLocations('ban ananas', baplist))).toEqual(grawlix('ban ananas'));
+  expect(replaceBadWords('blabla', findBadWordLocations('blabla', baplist))).toEqual('blabla');
+  expect(replaceBadWords('cute kitty cat', findBadWordLocations('cute kitty cat', baplist))).toEqual(
+    'cute ' + grawlix('kitty') + ' cat',
+  );
+  expect(
+    replaceBadWords(
+      'he.l-l what a kit~ty my w o r d',
+      findBadWordLocations('he.l-l what a kit~ty my w o r d', baplist),
+    ),
+  ).toEqual(grawlix('he.l-l') + ' what a ' + grawlix('kit~ty') + ' my ' + grawlix('w o r d'));
+  expect(
+    replaceBadWords(
+      'he.l-l, what a kit~ty my w o r d!',
+      findBadWordLocations('he.l-l, what a kit~ty my w o r d!', baplist),
+    ),
+  ).toEqual(grawlix('he.l-l') + ', what a ' + grawlix('kit~ty') + ' my ' + grawlix('w o r d') + '!');
+  expect(
+    replaceBadWords(
+      'a .-~h*e\\l---l~-. ^°-.k+itt`y.. cat',
+      findBadWordLocations('a .-~h*e\\l---l~-. ^°-.k+itt`y.. cat', baplist),
+    ),
+  ).toEqual('a .-~' + grawlix('h*e\\l---l') + '~-. ^°-.' + grawlix('k+itt`y') + '.. cat');
+});
+
+test('equality of replacement function with the tidier function', () => {
+  expect(replaceBadWords('kitty', findBadWordLocations('kitty', baplist))).toEqual(censorText('kitty', baplist));
+  expect(replaceBadWords('hell', findBadWordLocations('hell', baplist))).toEqual(censorText('hell', baplist));
+  expect(replaceBadWords('ban ananas', findBadWordLocations('ban ananas', baplist))).toEqual(
+    censorText('ban ananas', baplist),
+  );
+  expect(replaceBadWords('blabla', findBadWordLocations('blabla', baplist))).toEqual(censorText('blabla', baplist));
+  expect(replaceBadWords('cute kitty cat', findBadWordLocations('cute kitty cat', baplist))).toEqual(
+    censorText('cute kitty cat', baplist),
+  );
+  expect(
+    replaceBadWords(
+      'he.l-l what a kit~ty my w o r d',
+      findBadWordLocations('he.l-l what a kit~ty my w o r d', baplist),
+    ),
+  ).toEqual(censorText('he.l-l what a kit~ty my w o r d', baplist));
+  expect(
+    replaceBadWords(
+      'he.l-l, what a kit~ty my w o r d!',
+      findBadWordLocations('he.l-l, what a kit~ty my w o r d!', baplist),
+    ),
+  ).toEqual(censorText('he.l-l, what a kit~ty my w o r d!', baplist));
+  expect(
+    replaceBadWords(
+      'a .-~h*e\\l---l~-. ^°-.k+itt`y.. cat',
+      findBadWordLocations('a .-~h*e\\l---l~-. ^°-.k+itt`y.. cat', baplist),
+    ),
+  ).toEqual(censorText('a .-~h*e\\l---l~-. ^°-.k+itt`y.. cat', baplist));
+});
+
+test('replace bad words with repeat character', () => {
+  expect(
+    censorText('kitty', baplist, {
+      replacementType: WordReplacementType.RepeatCharacter,
+    }),
+  ).toEqual('-'.repeat('kitty'.length));
+  expect(
+    censorText('hell', baplist, {
+      replacementType: WordReplacementType.RepeatCharacter,
+    }),
+  ).toEqual('-'.repeat('hell'.length));
+  expect(
+    censorText('ban ananas', baplist, {
+      replacementType: WordReplacementType.RepeatCharacter,
+    }),
+  ).toEqual('-'.repeat('ban'.length) + ' ' + '-'.repeat('ananas'.length));
+  expect(
+    censorText('blabla', baplist, {
+      replacementType: WordReplacementType.RepeatCharacter,
+    }),
+  ).toEqual('blabla');
+  expect(
+    censorText('cute kitty cat', baplist, {
+      replacementType: WordReplacementType.RepeatCharacter,
+    }),
+  ).toEqual('cute ' + '-'.repeat('kitty'.length) + ' cat');
+  expect(
+    censorText('he.l-l what a kit~ty my w o r d', baplist, {
+      replacementType: WordReplacementType.RepeatCharacter,
+    }),
+  ).toEqual('--.--- what a ---~-- my - - - -');
+  expect(
+    censorText('he.l-l, what a kit~ty my w o r d!', baplist, {
+      replacementType: WordReplacementType.RepeatCharacter,
+    }),
+  ).toEqual('--.---, what a ---~-- my - - - -!');
+  expect(
+    censorText('a .-~h*e\\l---l~-. ^°-.k+itt`y.. cat', baplist, {
+      replacementType: WordReplacementType.RepeatCharacter,
+    }),
+  ).toEqual('a .-~-*-\\-----~-. ^°-.-+---`-.. cat');
+});
+
+test('replace bad words with custom repeat character', () => {
+  expect(
+    censorText('kitty', baplist, {
+      replacementType: WordReplacementType.RepeatCharacter,
+      replacementRepeatCharacter: '#',
+    }),
+  ).toEqual('#'.repeat('kitty'.length));
+  expect(
+    censorText('hell', baplist, {
+      replacementType: WordReplacementType.RepeatCharacter,
+      replacementRepeatCharacter: '*',
+    }),
+  ).toEqual('*'.repeat('hell'.length));
+  expect(
+    censorText('ban ananas', baplist, {
+      replacementType: WordReplacementType.RepeatCharacter,
+      replacementRepeatCharacter: 'x',
+    }),
+  ).toEqual('x'.repeat('ban'.length) + ' ' + 'x'.repeat('ananas'.length));
+  expect(
+    censorText('blabla', baplist, {
+      replacementType: WordReplacementType.RepeatCharacter,
+      replacementRepeatCharacter: '_',
+    }),
+  ).toEqual('blabla');
+  expect(
+    censorText('cute kitty cat', baplist, {
+      replacementType: WordReplacementType.RepeatCharacter,
+      replacementRepeatCharacter: '_',
+    }),
+  ).toEqual('cute ' + '_'.repeat('kitty'.length) + ' cat');
+  expect(
+    censorText('he.l-l what a kit~ty my w o r d', baplist, {
+      replacementType: WordReplacementType.RepeatCharacter,
+      replacementRepeatCharacter: '0',
+    }),
+  ).toEqual('00.0-0 what a 000~00 my 0 0 0 0');
+  expect(
+    censorText('he.l-l, what a kit~ty my w o r d!', baplist, {
+      replacementType: WordReplacementType.RepeatCharacter,
+      replacementRepeatCharacter: ':',
+    }),
+  ).toEqual('::.:-:, what a :::~:: my : : : :!');
+  expect(
+    censorText('a .-~h*e\\l---l~-. ^°-.k+itt`y.. cat', baplist, {
+      replacementType: WordReplacementType.RepeatCharacter,
+      replacementRepeatCharacter: '\\',
+    }),
+  ).toEqual('a .-~\\*\\\\\\---\\~-. ^°-.\\+\\\\\\`\\.. cat');
+});
+
+test('replace bad words but keep first and/or last characters', () => {
+  expect(censorText('kitty', baplist, { replacementMethod: WordReplacementMethod.KeepFirstCharacter })).toEqual(
+    'k' + grawlix('itty'),
+  );
+  expect(censorText('hell', baplist, { replacementMethod: WordReplacementMethod.KeepFirstAndLastCharacter })).toEqual(
+    'h' + grawlix('el') + 'l',
+  );
+  expect(censorText('ban ananas', baplist, { replacementMethod: WordReplacementMethod.KeepFirstCharacter })).toEqual(
+    'b' + grawlix('an ananas'),
+  );
+  expect(censorText('blabla', baplist, { replacementMethod: WordReplacementMethod.KeepFirstAndLastCharacter })).toEqual(
+    'blabla',
+  );
+  expect(
+    censorText('cute kitty cat', baplist, { replacementMethod: WordReplacementMethod.KeepFirstAndLastCharacter }),
+  ).toEqual('cute k' + grawlix('itt') + 'y cat');
+  expect(
+    censorText('he.l-l what a kit~ty my w o r d', baplist, {
+      replacementMethod: WordReplacementMethod.KeepFirstCharacter,
+    }),
+  ).toEqual('h' + grawlix('e.l-l') + ' what a k' + grawlix('it~ty') + ' my w' + grawlix(' o r d'));
+  expect(
+    censorText('he.l-l, what a kit~ty my w o r d!', baplist, {
+      replacementMethod: WordReplacementMethod.KeepFirstAndLastCharacter,
+    }),
+  ).toEqual('h' + grawlix('e.l-') + 'l, what a k' + grawlix('it~t') + 'y my w' + grawlix(' o r ') + 'd!');
+  expect(
+    censorText('a .-~h*e\\l---l~-. ^°-.k+itt`y.. cat', baplist, {
+      replacementMethod: WordReplacementMethod.KeepFirstAndLastCharacter,
+      replacementType: WordReplacementType.RepeatCharacter,
+    }),
+  ).toEqual('a .-~h*-\\----l~-. ^°-.k+---`y.. cat');
 });
 
 test('replace emojis', () => {

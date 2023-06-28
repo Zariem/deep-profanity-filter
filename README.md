@@ -23,11 +23,45 @@ How to use the tool to translate letter emojis or fancy 𝓤𝓷𝓲𝓬𝓸𝓭
 In the following section there will first be an explanation on how to do these things in JavaScript or TypeScript code, followed by some in-depth examples of what words and circumventions may get detected as bad words with some given input words.
 
 # Code Usage
+## Main Functions
+```js
+import {
+	// Input Preprocessing
+	unEmoji, // removes text-alike emojis in a string and replaces them with latin characters
+	removeTextAccents, // removes accents from characters in a string
+	textToLatin, // puts text to lowercase, replaces unicode characters that look like
+				 // letters with latin letters, and removes text-like emojis and accents
+	
+	// WordList Preprocessing
+	preprocessWordLists, // needed to set up bad word list and whitelist
+	
+	// Bad Word Detection
+	doesContainBadWords, // boolean true/false check on an input string
+	findAnyBadWord, // string of the first bad word found, undefined if none
+	findAllBadWords, // string[] of all bad words found in the input string
+	
+	// Bad Word Replacement
+	censorText, // replaces bad words in a text
+	
+	// Bad Word Replacement Settings
+	WordReplacementMethod, // used to replace all except first and/or last character of bad words
+	WordReplacementType, // used to replace bad words with grawlix (`&@!#`) or a repeated character
+	
+	// Bad Word Replacement and Detection (if both needed)
+	// (it is more efficient to call these if you need both functionalities)
+	findBadWordLocations, // gets the locations (and words) of bad words found in the input
+	getBadWords, // uses these locations to get all bad words in a string
+	replaceBadWords, // uses these locations to replace bad words in a string
+} from 'deep-profanity-filter';
+
+// Alternatively, import and use the functions with:
+const ProfanityFilter = require('deep-profanity-filter');
+ProfanityFilter.preprocessWordLists(...)
+```
+---
 ### Setting Up a List of Words
 ```js
 import { preprocessWordLists } from 'deep-profanity-filter';
-// alternatively: const ProfanityFilter = require('deep-profanity-filter');
-// and then use functions with: ProfanityFilter.preprocessWordLists(...)
 
 let badwords = ['kitty', 'hell*', '*word*', 'ban ananas'] // example
 let whitelist = ['hello kitty', 'hello*', 'ban ananas juice', 'keyword', 'loanword*', '*sword*', '*wording'] // example
@@ -40,21 +74,21 @@ Alternately, you can also change some fine-tuned settings, such as:
 - how to handle apostrophes in `s p a c e d` content. You can read up on the implications of these further down in this readme. For filtering English content, it is recommended to leave both values on their defaults. For other languages you may benefit from setting one or both value to false.
 ```js
 let wordFilter = preprocessWordLists(badwords, whitelist, {
-	checkCircumventions: false, // per default it's set to true
+	checkCircumventions: false, // default = true
 }
 									 
 let wordFilter2 = preprocessWordLists(badwords, whitelist, {
-	considerPrecedingApostrophes: false, // per default it's set to true
-	considerFollowUpApostrophes: false, // per default it's set to true
+	considerPrecedingApostrophes: false, // default = true
+	considerFollowUpApostrophes: false, // default = true
 }
 
 let wordFilter3 = preprocessWordLists(badwords, whitelist, {
-	considerFollowUpApostrophes: false, // per default it's set to true
+	considerFollowUpApostrophes: false, // default = true
 }
 ```
-**Note**: While you can set all of these values at the same time, `considerPrecedingApostrophes` and `considerFollowUpApostrophes` only have an effect on circumvented variations of the word, so if you set `checkCircumventions` to false, setting the apostrophe handling is redundant.
+**Note**: While you can set all of these values at the same time, `considerPrecedingApostrophes` and `considerFollowUpApostrophes` only have an effect on circumvented variations of the word, so if you set `checkCircumventions` to `false`, setting the apostrophe handling is redundant.
 
-**Note**: Since these settings apply to a whole list of words, it makes sense to treat content such as links in its own word list and check any input against both word lists separately.
+**Note**: Since these settings apply to a whole list of words, it makes sense to treat content that needs to only be matched exactly - such as links - in its own word list and check any input against both word lists separately.
 
 ### Changing The Word Lists
 ```js
@@ -62,21 +96,112 @@ let wordFilter3 = preprocessWordLists(badwords, whitelist, {
 // using preprocessWordLists(...)
 badwords.push("newbadword");
 whitelist.push("newbadword but good");
-wordFilter = preprocessWordLists(badwords, whitelist /*, apostrophe settings*/);
+wordFilter = preprocessWordLists(badwords, whitelist /*{ WordFilterOptions }*/);
 ```
 
-### Detecting Words From the List
+### Detecting If There Is a Bad Word
 ```js
 import { doesContainBadWords } from 'deep-profanity-filter';
 
 let inputString = 'This is some example text about my kitty cat.';
 if (doesContainBadWords(inputString, wordFilter)) {
-	// the string contained a bad word!
+	console.log('Found a bad word!');
 } else {
-	// no bad words were found or all were whitelisted!
+	console.log('No bad word found.'); // Or all bad words whitelisted.
 }
+// Output:
+// Found a bad word!
 ```
+### Finding a Bad Word in an Input
+```js
+import { findAnyBadWord } from 'deep-profanity-filter';
 
+const badWord = findAnyBadWord('test input string about a kitty', wordFilter);
+if (badWord) {
+	console.log('Found a bad word: ', badWord);
+} else {
+	console.log('No bad word found.'); // Or all bad words whitelisted.
+}
+// Output:
+// Found a bad word:  kitty
+```
+### Finding All Bad Words in an Input
+```js
+import { findAllBadWords } from 'deep-profanity-filter';
+
+const badWords = findAllBadWords('hell kitty is my fav word!!!', wordFilter);
+if (badWord.length > 0) {
+	console.log('Found bad words: ', badWords);
+} else {
+	console.log('No bad words were found.'); // Or all bad words whitelisted.
+}
+// Output:
+// Found bad words:  [ 'kitty', 'hell*', '*word*' ]
+```
+### Replacing all Bad Words in an Input
+If you wish to replace all bad words in a text in order to "sanitise" it, but you have no need for a list of all bad words, you can use `censorText`:
+```js
+import { censorText } from 'deep-profanity-filter';
+
+// This is grawlix replacement:
+console.log(censorText('cute kitty cat', wordFilter)); // cute #&?£& cat
+
+// Word replacement preserves special characters and spacing in circumventions
+console.log(censorText('oh he.l-l, what a kit~ty! my w o r d!?!', wordFilter));
+// oh %£.?-£, what a #&?~£&! my ! % $ ?!?!
+```
+If you wish to **at the same time query a list of all bad words**, use `findBadWordLocations` along with `replaceBadWords` and `getBadWords` instead to ensure better runtime efficiency:
+```js
+import { findBadWordLocations, getBadWords, replaceBadWords } from 'deep-profanity-filter';
+
+let inputStrings = ['cute kitty cat',
+					'oh he.l-l, what a kit~ty! my w o r d!?!'];
+for (const str of inputStrings) {
+	let locations = findBadWordLocations(str, wordFilter);
+	console.log('Testing input string: "' + str + '"');
+	console.log('Bad words found:', getBadWords(locations)); // [ 'kitty' ];
+	console.log('Output: "' + replaceBadWords(str, locations) + '"'); // cute #&?£& cat
+}
+// Output:
+// Testing input string: "cute kitty cat"
+// Bad words found:  [ 'kitty' ]
+// Output: "cute #&?£& cat"
+// Testing input string: "oh he.l-l, what a kit~ty! my w o r d!?!"
+// Bad words found:  [ 'kitty', 'hell*', '*word*' ]
+// Output: "oh %£.?-£, what a #&?~£&! my ! % $ ?!?!"
+```
+#### Varying the Replacement Characters:
+If you don't want to replace your bad words with grawlix `%&$#?£@!` characters, you can also choose to replace the words with a single repeated character:
+```js
+import { censorText, WordReplacementType } from 'deep-profanity-filter';
+
+// Repeat character replacement:
+console.log(censorText('cute kitty cat', wordFilter, {
+	replacementType: WordReplacementType.RepeatCharacter,
+})); // cute ----- cat
+
+// Specifying a custom repeat character:
+console.log(censorText('cute kitty cat', wordFilter, {
+	replacementType: WordReplacementType.RepeatCharacter,
+	replacementRepeatCharacter: '*',
+})); // cute ***** cat
+```
+This also works as an argument on `replaceBadWords`.
+#### Keeping the First or Last Characters of the Bad Word
+If you don't wish to replace the full word, you can also choose to keep the first, or the first and last characters intact.
+```js
+import { censorText, WordReplacementMethod, WordReplacementType } from 'deep-profanity-filter';
+
+console.log(censorText('cute kitty cat', wordFilter, {
+	replacementType: WordReplacementType.RepeatCharacter,
+	replacementMethod: WordReplacementMethod.KeepFirstCharacter,
+})); // cute k---- cat
+
+console.log(censorText('cute kitty cat', wordFilter, {
+	replacementMethod: WordReplacementMethod.KeepFirstAndLastCharacter,
+})); // cute k&?£y cat
+```
+This again also works as an argument on `replaceBadWords`.
 ### Input Preprocessing
 ```js
 import { unEmoji, removeTextAccents, textToLatin } from 'deep-profanity-filter';
