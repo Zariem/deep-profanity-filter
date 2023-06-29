@@ -26,7 +26,7 @@ const badwords = [
   'a$$hole',
   '¯\\_(ツ)_/¯',
   '/(?:a)?fake(.)*regex$/',
-  'שלום'
+  'שלום',
 ];
 const goodwords = ['hello kitty', 'hello*', 'ban ananas juice', 'keyword', 'loanword*', '*sword*', '*wording'];
 const baplist = preprocessWordLists(badwords, goodwords);
@@ -70,7 +70,7 @@ test('filter non-ASCII word', () => {
   expect(doesContainBadWords('שלום', baplist)).toEqual(true);
   expect(doesContainBadWords('שלום עליכם', baplist)).toEqual(true);
   expect(doesContainBadWords('עליכם', baplist)).toEqual(false);
-})
+});
 
 test('only bap standalone word if without wildcards', () => {
   expect(doesContainBadWords('kittycat', baplist)).toEqual(false);

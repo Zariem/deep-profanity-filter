@@ -338,8 +338,11 @@ No matter how you decide to handle apostrophes, and given the example of a bad w
 In the default settings, we consider both apostrophes before and after spaced characters to "break the pattern". This setting is recommended for use with English inputs.
 ```js
 preprocessWordLists(badwords, whitelist);
-// or
-preprocessWordLists(badwords, whitelist, true, true);
+// or (with redundancy)
+preprocessWordLists(badwords, whitelist, {
+	considerPrecedingApostrophes: true,
+	considerFollowUpApostrophes: true,
+});
 ```
 This means that, given the bad word `kitty`, the following phrases are considered **__bad words__** as well:
 - `it's k i t t y`
