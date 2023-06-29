@@ -75,16 +75,16 @@ Alternately, you can also change some fine-tuned settings, such as:
 ```js
 let wordFilter = preprocessWordLists(badwords, whitelist, {
 	checkCircumventions: false, // default = true
-}
+});
 									 
 let wordFilter2 = preprocessWordLists(badwords, whitelist, {
 	considerPrecedingApostrophes: false, // default = true
 	considerFollowUpApostrophes: false, // default = true
-}
+});
 
 let wordFilter3 = preprocessWordLists(badwords, whitelist, {
 	considerFollowUpApostrophes: false, // default = true
-}
+});
 ```
 **Note**: While you can set all of these values at the same time, `considerPrecedingApostrophes` and `considerFollowUpApostrophes` only have an effect on circumvented variations of the word, so if you set `checkCircumventions` to `false`, setting the apostrophe handling is redundant.
 
@@ -155,7 +155,7 @@ If you wish to **at the same time query a list of all bad words**, use `findBadW
 import { findBadWordLocations, getBadWords, replaceBadWords } from 'deep-profanity-filter';
 
 let inputStrings = ['cute kitty cat',
-					'oh he.l-l, what a kit~ty! my w o r d!?!'];
+	'oh he.l-l, what a kit~ty! my w o r d!?!'];
 for (const str of inputStrings) {
 	let locations = findBadWordLocations(str, wordFilter);
 	console.log('Testing input string: "' + str + '"');
@@ -355,7 +355,9 @@ This means that, given the bad word `kitty`, the following phrases are considere
 In this setting, we consider preceding apostrophes to be treated like any other special character or whitespace.
 ```js
 // use this code to allow certain phrases with alternate preceding apostrophes
-preprocessWordLists(badwords, whitelist, false, true);
+preprocessWordLists(badwords, whitelist, {
+	considerPrecedingApostrophes: false,
+});
 ```
 This means that, given the bad word `kitty`, the following phrases are considered **__bad words__**:
 - `k i t t y's`
@@ -373,7 +375,9 @@ The following words are **__not__** being recognised as bad words:
 In this setting, we consider apostrophes after the word to be treated like any other special character or whitespace.
 ```js
 // use this code to allow certain phrases with alternate follow-up apostrophes
-preprocessWordLists(badwords, whitelist, true, false);
+preprocessWordLists(badwords, whitelist, {
+	considerFollowUpApostrophes: false,
+});
 ```
 This means that, given the bad word `kitty`, the following phrases are considered **__bad words__**:
 - `it's k i t t y`
@@ -391,7 +395,10 @@ The following words are **__not__** being recognised as bad words:
 In this setting, we consider apostrophes the same as whitespace or other special characters. Singular characters separated with apostrophes are getting read like a full word, and if we parse without wildcards, such as the example with `kitty`, it reads followup letters as if they are part of the spaced word, so `a's k i t t y` or `k i t t y s` will be parsed as `askitty` and `kittys` and not trigger the bad word filter.
 ```js
 // use this code to parse apostrophes like other non-word characters
-preprocessWordLists(badwords, whitelist, false, false);
+preprocessWordLists(badwords, whitelist, {
+	considerPrecedingApostrophes: false,
+	considerFollowUpApostrophes: false,
+});
 ```
 In this case, all the examples stated previously are **__not__** considered bad words:
 - `it's k i t t y` *(looks like a bad word to me, but gets parsed as `skitty`)*
