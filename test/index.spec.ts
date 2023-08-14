@@ -12,6 +12,7 @@ import {
   WordReplacementMethod,
   WordReplacementType,
   censorText,
+  InputPreprocessMethod,
 } from '../src';
 import { escapeStringForRegex } from '../src/regex_handler';
 import { grawlix } from '../src/replace_input';
@@ -547,6 +548,246 @@ test('replace bad words but keep first and/or last characters', () => {
       replacementType: WordReplacementType.RepeatCharacter,
     }),
   ).toEqual('a .-~h*-\\----l~-. ^°-.k+---`y.. cat');
+});
+
+test('replace bad words regardless of capitalisation', () => {
+  expect(
+    censorText('KITTY', baplist, {
+      replacementType: WordReplacementType.RepeatCharacter,
+    }),
+  ).toEqual('-'.repeat('KITTY'.length));
+  expect(
+    censorText('Kitty', baplist, {
+      replacementType: WordReplacementType.RepeatCharacter,
+    }),
+  ).toEqual('-'.repeat('Kitty'.length));
+  expect(
+    censorText('kItTy', baplist, {
+      replacementType: WordReplacementType.RepeatCharacter,
+    }),
+  ).toEqual('-'.repeat('kItTy'.length));
+  expect(
+    censorText('hELl', baplist, {
+      replacementType: WordReplacementType.RepeatCharacter,
+    }),
+  ).toEqual('-'.repeat('hELl'.length));
+  expect(
+    censorText('bAn Ananas', baplist, {
+      replacementType: WordReplacementType.RepeatCharacter,
+    }),
+  ).toEqual('-'.repeat('bAn'.length) + ' ' + '-'.repeat('Ananas'.length));
+  expect(
+    censorText('blABlA', baplist, {
+      replacementType: WordReplacementType.RepeatCharacter,
+    }),
+  ).toEqual('blABlA');
+  expect(
+    censorText('cuTe kITTy CAt', baplist, {
+      replacementType: WordReplacementType.RepeatCharacter,
+    }),
+  ).toEqual('cuTe ' + '-'.repeat('kITTy'.length) + ' CAt');
+  expect(
+    censorText('He.L-l wHAt a kIt~tY mY W o R d', baplist, {
+      replacementType: WordReplacementType.RepeatCharacter,
+    }),
+  ).toEqual('--.--- wHAt a ---~-- mY - - - -');
+
+  expect(
+    censorText('KITTY', baplist, {
+      replacementType: WordReplacementType.RepeatCharacter,
+      replacementMethod: WordReplacementMethod.KeepFirstAndLastCharacter,
+    }),
+  ).toEqual('K' + '-'.repeat('ITT'.length) + 'Y');
+  expect(
+    censorText('Kitty', baplist, {
+      replacementType: WordReplacementType.RepeatCharacter,
+      replacementMethod: WordReplacementMethod.KeepFirstAndLastCharacter,
+    }),
+  ).toEqual('K' + '-'.repeat('itt'.length) + 'y');
+  expect(
+    censorText('kItTy', baplist, {
+      replacementType: WordReplacementType.RepeatCharacter,
+      replacementMethod: WordReplacementMethod.KeepFirstAndLastCharacter,
+    }),
+  ).toEqual('k' + '-'.repeat('ItT'.length) + 'y');
+  expect(
+    censorText('hElL', baplist, {
+      replacementType: WordReplacementType.RepeatCharacter,
+      replacementMethod: WordReplacementMethod.KeepFirstAndLastCharacter,
+    }),
+  ).toEqual('h' + '-'.repeat('El'.length) + 'L');
+  expect(
+    censorText('bAn AnanaS', baplist, {
+      replacementType: WordReplacementType.RepeatCharacter,
+      replacementMethod: WordReplacementMethod.KeepFirstAndLastCharacter,
+    }),
+  ).toEqual('b' + '-'.repeat('An'.length) + ' ' + '-'.repeat('Anana'.length) + 'S');
+  expect(
+    censorText('blABlA', baplist, {
+      replacementType: WordReplacementType.RepeatCharacter,
+      replacementMethod: WordReplacementMethod.KeepFirstAndLastCharacter,
+    }),
+  ).toEqual('blABlA');
+  expect(
+    censorText('cuTe KiTTy CAt', baplist, {
+      replacementType: WordReplacementType.RepeatCharacter,
+      replacementMethod: WordReplacementMethod.KeepFirstAndLastCharacter,
+    }),
+  ).toEqual('cuTe K' + '-'.repeat('iTT'.length) + 'y CAt');
+  expect(
+    censorText('He.L-l wHAt a kIt~tY mY W o R d', baplist, {
+      replacementType: WordReplacementType.RepeatCharacter,
+      replacementMethod: WordReplacementMethod.KeepFirstAndLastCharacter,
+    }),
+  ).toEqual('H-.--l wHAt a k--~-Y mY W - - d');
+});
+
+test('replace bad words only if capitalisation matches', () => {
+  expect(
+    censorText('KITTY', baplist, {
+      inputPreprocessMethod: InputPreprocessMethod.ExactMatch,
+      replacementType: WordReplacementType.RepeatCharacter,
+    }),
+  ).toEqual('KITTY');
+  expect(
+    censorText('Kitty', baplist, {
+      inputPreprocessMethod: InputPreprocessMethod.ExactMatch,
+      replacementType: WordReplacementType.RepeatCharacter,
+    }),
+  ).toEqual('Kitty');
+  expect(
+    censorText('kItTy', baplist, {
+      inputPreprocessMethod: InputPreprocessMethod.ExactMatch,
+      replacementType: WordReplacementType.RepeatCharacter,
+    }),
+  ).toEqual('kItTy');
+  expect(
+    censorText('blABlA', baplist, {
+      inputPreprocessMethod: InputPreprocessMethod.ExactMatch,
+      replacementType: WordReplacementType.RepeatCharacter,
+    }),
+  ).toEqual('blABlA');
+  expect(
+    censorText('cuTe kitty CAt', baplist, {
+      inputPreprocessMethod: InputPreprocessMethod.ExactMatch,
+      replacementType: WordReplacementType.RepeatCharacter,
+    }),
+  ).toEqual('cuTe ' + '-'.repeat('kitty'.length) + ' CAt');
+  expect(
+    censorText('He.L-l wHAt a kIt~tY mY w o r d', baplist, {
+      inputPreprocessMethod: InputPreprocessMethod.ExactMatch,
+      replacementType: WordReplacementType.RepeatCharacter,
+    }),
+  ).toEqual('He.L-l wHAt a kIt~tY mY - - - -');
+});
+
+test('replace bad words with weird alphabets', () => {
+  expect(textToLatin('ᖽᐸ')).toEqual('k');
+  expect(
+    censorText('ᖽᐸᓰᖶᖶᖻ', baplist, {
+      inputPreprocessMethod: InputPreprocessMethod.Thorough,
+      replacementType: WordReplacementType.RepeatCharacter,
+    }),
+  ).toEqual('-'.repeat('kitty'.length));
+  expect(
+    censorText('Ҝเｔ丅ү', baplist, {
+      inputPreprocessMethod: InputPreprocessMethod.Thorough,
+      replacementType: WordReplacementType.RepeatCharacter,
+    }),
+  ).toEqual('-'.repeat('kitty'.length));
+  expect(
+    censorText('кเՇՇץ', baplist, {
+      inputPreprocessMethod: InputPreprocessMethod.Thorough,
+      replacementType: WordReplacementType.RepeatCharacter,
+    }),
+  ).toEqual('-'.repeat('kitty'.length));
+  expect(
+    censorText('нєℓℓ', baplist, {
+      inputPreprocessMethod: InputPreprocessMethod.Thorough,
+      replacementType: WordReplacementType.RepeatCharacter,
+    }),
+  ).toEqual('-'.repeat('hell'.length));
+  expect(
+    censorText('乃ﾑ刀 ﾑ刀ﾑ刀ﾑ丂', baplist, {
+      inputPreprocessMethod: InputPreprocessMethod.Thorough,
+      replacementType: WordReplacementType.RepeatCharacter,
+    }),
+  ).toEqual('-'.repeat('ban'.length) + ' ' + '-'.repeat('ananas'.length));
+  expect(
+    censorText('ᗷᒪᗩᗷᒪᗩ', baplist, {
+      inputPreprocessMethod: InputPreprocessMethod.Thorough,
+      replacementType: WordReplacementType.RepeatCharacter,
+    }),
+  ).toEqual('ᗷᒪᗩᗷᒪᗩ');
+  expect(
+    censorText('çմͲҽ ҟìͲͲվ ↻Ⱥէ', baplist, {
+      inputPreprocessMethod: InputPreprocessMethod.Thorough,
+      replacementType: WordReplacementType.RepeatCharacter,
+    }),
+  ).toEqual('cute ' + '-'.repeat('kitty'.length) + ' cat');
+  expect(
+    censorText('Ħ𝑒.Ⓛ-ㄥ 𝔴ђ𝔸𝓽 α 𝔨ⓘŤ~тƳ 𝕄ｙ 𝓌 𝑜 𝓻 𝐝', baplist, {
+      inputPreprocessMethod: InputPreprocessMethod.Thorough,
+      replacementType: WordReplacementType.RepeatCharacter,
+    }),
+  ).toEqual('--.--- what a ---~-- my - - - -');
+
+  expect(
+    censorText('ᖽᐸᓰᖶᖶᖻ', baplist, {
+      inputPreprocessMethod: InputPreprocessMethod.Thorough,
+      replacementType: WordReplacementType.RepeatCharacter,
+      replacementMethod: WordReplacementMethod.KeepFirstAndLastCharacter,
+    }),
+  ).toEqual('k' + '-'.repeat('itt'.length) + 'y');
+  expect(
+    censorText('кเՇՇץ', baplist, {
+      inputPreprocessMethod: InputPreprocessMethod.Thorough,
+      replacementType: WordReplacementType.RepeatCharacter,
+      replacementMethod: WordReplacementMethod.KeepFirstAndLastCharacter,
+    }),
+  ).toEqual('k' + '-'.repeat('itt'.length) + 'y');
+  expect(
+    censorText('Ҝเｔ丅ү', baplist, {
+      inputPreprocessMethod: InputPreprocessMethod.Thorough,
+      replacementType: WordReplacementType.RepeatCharacter,
+      replacementMethod: WordReplacementMethod.KeepFirstAndLastCharacter,
+    }),
+  ).toEqual('k' + '-'.repeat('itt'.length) + 'y');
+  expect(
+    censorText('нєℓℓ', baplist, {
+      inputPreprocessMethod: InputPreprocessMethod.Thorough,
+      replacementType: WordReplacementType.RepeatCharacter,
+      replacementMethod: WordReplacementMethod.KeepFirstAndLastCharacter,
+    }),
+  ).toEqual('h' + '-'.repeat('el'.length) + 'l');
+  expect(
+    censorText('乃ﾑ刀 ﾑ刀ﾑ刀ﾑ丂', baplist, {
+      inputPreprocessMethod: InputPreprocessMethod.Thorough,
+      replacementType: WordReplacementType.RepeatCharacter,
+      replacementMethod: WordReplacementMethod.KeepFirstAndLastCharacter,
+    }),
+  ).toEqual('b' + '-'.repeat('an'.length) + ' ' + '-'.repeat('anana'.length) + 's');
+  expect(
+    censorText('ᗷᒪᗩᗷᒪᗩ', baplist, {
+      inputPreprocessMethod: InputPreprocessMethod.Thorough,
+      replacementType: WordReplacementType.RepeatCharacter,
+      replacementMethod: WordReplacementMethod.KeepFirstAndLastCharacter,
+    }),
+  ).toEqual('ᗷᒪᗩᗷᒪᗩ');
+  expect(
+    censorText('çմͲҽ ҟìͲͲվ ↻Ⱥէ', baplist, {
+      inputPreprocessMethod: InputPreprocessMethod.Thorough,
+      replacementType: WordReplacementType.RepeatCharacter,
+      replacementMethod: WordReplacementMethod.KeepFirstAndLastCharacter,
+    }),
+  ).toEqual('cute k' + '-'.repeat('itt'.length) + 'y cat');
+  expect(
+    censorText('Ħ𝑒.Ⓛ-ㄥ 𝔴ђ𝔸𝓽 α 𝔨ⓘŤ~тƳ 𝕄ｙ 𝓌 𝑜 𝓻 𝐝', baplist, {
+      inputPreprocessMethod: InputPreprocessMethod.Thorough,
+      replacementType: WordReplacementType.RepeatCharacter,
+      replacementMethod: WordReplacementMethod.KeepFirstAndLastCharacter,
+    }),
+  ).toEqual('h-.--l what a k--~-y my w - - d');
 });
 
 test('replace emojis', () => {

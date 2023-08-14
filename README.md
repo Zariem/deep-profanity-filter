@@ -44,6 +44,7 @@ import {
 	censorText, // replaces bad words in a text
 	
 	// Bad Word Replacement Settings
+	InputPreprocessMethod, // used to preprocess the input in the censorText(...) function
 	WordReplacementMethod, // used to replace all except first and/or last character of bad words
 	WordReplacementType, // used to replace bad words with grawlix (`&@!#`) or a repeated character
 	
@@ -169,6 +170,62 @@ for (const str of inputStrings) {
 // Testing input string: "oh he.l-l, what a kit~ty! my w o r d!?!"
 // Bad words found:  [ 'kitty', 'hell*', '*word*' ]
 // Output: "oh %£.?-£, what a #&?~£&! my ! % $ ?!?!"
+```
+#### Preprocessing inputs for replacement:
+`censorText` has simplified settings for preprocessing the input, while `replaceBadWords(str, findBadWordLocations(str, filter))` offers more flexibility, but also more responsibility to preprocess things.
+For simplicity, `censorText` per default filters case insensitively while retaining uppercase and lowercase of the input string:
+```js
+console.log(censorText('Cute Kitty Cat', wordFilter)); // Cute #&?£& Cat
+// which is equivalent to:
+console.log(censorText('Cute Kitty Cat', wordFilter, {
+	inputPreprocessMethod: InputPreprocessMethod.CaseInsensitive,
+})); // Cute #&?£& Cat
+
+// Note, it can't deal with special unicode characters.
+// For that, use InputPreprocessMethod.Thorough (more info below)
+console.log(censorText('𝒞𝓊𝓉𝑒 𝒦𝒾𝓉𝓉𝓎 𝒞𝒶𝓉', wordFilter)); // 𝒞𝓊𝓉𝑒 𝒦𝒾𝓉𝓉𝓎 𝒞𝒶𝓉
+```
+The same can be achieved with:
+```js
+const input = 'Cute Kitty Cat';
+const lowerCaseString = input.toLowerCase();
+const locations = findBadWordLocations(lowerCaseString, wordFilter);
+console.log(replaceBadWords(input, locations)); // Cute #&?£& Cat
+```
+Case sensitivity can be purposefully turned off, in which cases words are only recognised if they directly match with the words defined in the bad word list: *(This is not recommended and therefore not the default setting.)*
+```js
+console.log(censorText('Cute Kitty Cat', wordFilter, {
+	inputPreprocessMethod: InputPreprocessMethod.ExactMatch,
+})); // Cute Kitty Cat
+console.log(censorText('Cute kitty Cat', wordFilter, {
+	inputPreprocessMethod: InputPreprocessMethod.ExactMatch,
+})); // Cute #&?£& Cat
+
+// Or equivalently:
+const locationsBad = findBadWordLocations('Cute Kitty Cat', wordFilter);
+// (finds nothing as it is not lower case)
+console.log(replaceBadWords('Cute Kitty Cat', locationsBad)); // Cute Kitty Cat
+
+const locationsOk = findBadWordLocations('Cute Kitty Cat'.toLowerCase(), wordFilter);
+console.log(replaceBadWords('Cute Kitty Cat', locationsOk)); // Cute #&?£& Cat
+console.log(replaceBadWords('Cute Kitty Cat'.toLowerCase(), locationsOk)); // cute #&?£& cat
+```
+If you are looking for a thorough filter, including fancy 𝓤𝓷𝓲𝓬𝓸𝓭𝓮 𝔸𝕝𝕡𝕙𝕒𝕓𝕖𝕥𝕤 and emoji letters being parsed as well, this is supported in a special setting as well. This is equivalent to using `textToLatin` on the input.
+*(Currently, it will turn the output of censorText to lower case latin letters if any emojis or fancy unicode text are found in the text, as emojis and fancy alphabets can have a different character count to the latin letters they translate to and that is difficult to replace while keeping the rest of the text in the correct formatting.)*
+```js
+console.log(censorText('Cute Kitty Cat', wordFilter, {
+	inputPreprocessMethod: InputPreprocessMethod.Thorough,
+})); // Cute #&?£& Cat
+console.log(censorText('𝒞𝓊𝓉𝑒 𝒦𝒾𝓉𝓉𝓎 𝒞𝒶𝓉', wordFilter, {
+	inputPreprocessMethod: InputPreprocessMethod.Thorough,
+})); // cute #&?£& cat
+console.log(censorText('𝒞𝓊𝓉𝑒 kitty cat', wordFilter, {
+	inputPreprocessMethod: InputPreprocessMethod.Thorough,
+})); // cute #&?£& cat
+
+// or equivalently:
+const input = textToLatin('𝒞𝓊𝓉𝑒 𝒦𝒾𝓉𝓉𝓎 𝒞𝒶𝓉'); // cute kitty cat
+console.log(replaceBadWords(input, findBadWordLocations(input, wordFilter))); // cute #&?£& cat
 ```
 #### Varying the Replacement Characters:
 If you don't want to replace your bad words with grawlix `%&$#?£@!` characters, you can also choose to replace the words with a single repeated character:

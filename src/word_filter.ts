@@ -1,6 +1,13 @@
+import { textToLatin } from './input_preprocessor';
 import { reconstructLocations, reduceInputString } from './reduce_input_string';
 import { grawlix, replaceChars } from './replace_input';
 import { BadWordData, WhitelistMap, ProcessedWordLists } from './wordlist_preprocessor';
+
+export enum InputPreprocessMethod {
+  Thorough, // textToLatin (removing accents, translating foreign characters and emojis to latin letters)
+  CaseInsensitive, // converting input to lower case before searching for bad words
+  ExactMatch, // no preprocessing (not recommended)
+}
 
 export enum WordReplacementMethod {
   ReplaceAll,
@@ -23,7 +30,7 @@ export interface WordSearchOptions {
 }
 
 /**
- * Options used in `replaceBadWords(...)` and `censorText(...)` to determine how to replace bad words in a given input string.
+ * Options used in `replaceBadWords(...)` to determine how to replace bad words in a given input string.
  * @param replacementMethod - (Default: `WordReplacementMethod.ReplaceAll`) Used to select whether to replace the
  * whole word, or keep the first (and last) characters from the bad word intact.
  * @param replacementType - (Default: `WordReplacementType.Grawlix`) Used to select whether to replace the
@@ -33,6 +40,28 @@ export interface WordSearchOptions {
  * (If several characters are entered, only the first one will be used.)
  */
 export interface WordReplacementOptions {
+  replacementMethod?: WordReplacementMethod;
+  replacementType?: WordReplacementType;
+  replacementRepeatCharacter?: string;
+}
+
+/**
+ * Options used in `censorText(...)` to determine how to filter and replace bad words in a given input string.
+ * @param inputPreprocessMethod - (Default: `InputPreprocessMethod.CaseInsensitive`) Used to preprocess the input
+ * string before identifying bad words. `CaseInsensitive`: transforms the input to lower case and then matches it against
+ * the bad word list. `Thorough` uses the `textToLatin()` function to remove text accents, translate letter emojis and
+ * any other fancy unicode fonts to latin before testing for bad words.
+ * `ExactMatch` matches the input string against the bad word list exactly.
+ * @param replacementMethod - (Default: `WordReplacementMethod.ReplaceAll`) Used to select whether to replace the
+ * whole word, or keep the first (and last) characters from the bad word intact.
+ * @param replacementType - (Default: `WordReplacementType.Grawlix`) Used to select whether to replace the
+ * word with a jumbled mess of Grawlix (`$!#@&%`)  characters, or with a selected repeatable character defined
+ * in the next parameter.
+ * @param replacementRepeatCharacter - (Default: `-`) The character to repeat in order to replace the bad word.
+ * (If several characters are entered, only the first one will be used.)
+ */
+export interface WordCensorOptions {
+  inputPreprocessMethod?: InputPreprocessMethod;
   replacementMethod?: WordReplacementMethod;
   replacementType?: WordReplacementType;
   replacementRepeatCharacter?: string;
@@ -371,6 +400,13 @@ export const replaceBadWords = (
  *
  * @param inputString - The text that got checked for bad words in `findBadWordLocations(...)`
  * @param badWordLocations - The information on all bad word matches found with `findBadWordLocations(...)`
+ * @param inputPreprocessMethod - (Default: `InputPreprocessMethod.CaseInsensitive`) Used to preprocess the input
+ * string before identifying bad words. `CaseInsensitive`: transforms the input to lower case and then matches it against
+ * the bad word list.
+ * `Thorough` uses the `textToLatin()` function to remove text accents, translate letter emojis and
+ * any other fancy unicode fonts to latin before testing for bad words. Note: If non-latin characters are found,
+ * the censored text will be returned all in lower case and in latin letters.
+ * `ExactMatch` matches the input string against the bad word list exactly.
  * @param replacementMethod - (Default: `WordReplacementMethod.ReplaceAll`) Used to select whether to replace the
  * whole word, or keep the first (and last) characters from the bad word intact.
  * @param replacementType - (Default: `WordReplacementType.Grawlix`) Used to select whether to replace the
@@ -384,13 +420,29 @@ export const censorText = (
   inputString: string,
   processedWordLists: ProcessedWordLists,
   {
+    inputPreprocessMethod = InputPreprocessMethod.CaseInsensitive,
     replacementMethod = WordReplacementMethod.ReplaceAll,
     replacementType = WordReplacementType.Grawlix,
     replacementRepeatCharacter = '-',
-  }: WordReplacementOptions = {},
+  }: WordCensorOptions = {},
 ): string => {
-  const locations = findBadWordLocations(inputString, processedWordLists);
-  return replaceBadWords(inputString, locations, {
+  let stringToScan = inputString;
+  if (inputPreprocessMethod === InputPreprocessMethod.CaseInsensitive) {
+    stringToScan = stringToScan.toLowerCase();
+  } else if (inputPreprocessMethod === InputPreprocessMethod.Thorough) {
+    stringToScan = textToLatin(inputString);
+  }
+  const locations = findBadWordLocations(stringToScan, processedWordLists);
+
+  if (locations.length === 0) {
+    return inputString;
+  }
+
+  let stringToReplace = stringToScan;
+  if (stringToScan === inputString.toLowerCase()) {
+    stringToReplace = inputString;
+  }
+  return replaceBadWords(stringToReplace, locations, {
     replacementMethod,
     replacementType,
     replacementRepeatCharacter,
