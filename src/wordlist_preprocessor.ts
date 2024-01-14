@@ -225,8 +225,8 @@ export const preprocessWordListOverrideData = (
     }
   }
 
-  const whitelistDisables = {};
-  const whitelistEnables = {};
+  const whitelistDisables: { [badword: string]: string[] } = {};
+  const whitelistEnables: WhitelistMap = {};
   for (const defaultBadWordData of defaultWordList.badWordData) {
     const badword = defaultBadWordData.word;
     const badwordRegexp = defaultBadWordData.normalRegexp;

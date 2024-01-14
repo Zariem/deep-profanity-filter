@@ -292,7 +292,7 @@ export const findBadWordLocations = (
           false,
           overrideData,
         );
-        let actualReducedStringLocations = [];
+        let actualReducedStringLocations: BadWordMatchData[] = [];
         if (matchedReducedStringLocations.length > 0) {
           actualReducedStringLocations = reconstructLocations(
             reducedData.reducedLocations,
@@ -373,7 +373,7 @@ export const findAnyBadWord = (
  * bad word once, even if they repeat.
  */
 export const getBadWords = (badWordLocations: BadWordMatchData[]): string[] => {
-  const foundWords = [];
+  const foundWords: string[] = [];
   for (const matchInfo of badWordLocations) {
     if (!foundWords.includes(matchInfo.word)) {
       foundWords.push(matchInfo.word);
