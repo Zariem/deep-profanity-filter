@@ -81,11 +81,11 @@ export type ProcessedWordLists = {
  * The word lists and data used to modify already pre-calculated word lists by adding or removing
  * whitelisted terms or by removing/disabling bad words from that list.
  * This data can then be piggybacked onto an existing list in functions that find or get bad words.
- * 
+ *
  * Using override data is recommended if lots of different parts of code share a very similar word list,
  * with different parts of the code having slight modifications to it, where modifications are expected to
  * contain significantly less words than the modified, "default" list.
- * 
+ *
  * Can be created with `preprocessWordListOverrideData(...)`
  */
 export type WordListOverrideData = {
