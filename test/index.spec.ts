@@ -13,6 +13,7 @@ import {
   WordReplacementType,
   censorText,
   InputPreprocessMethod,
+  preprocessWordListOverrideData,
 } from '../src';
 import { escapeStringForRegex } from '../src/regex_handler';
 import { grawlix } from '../src/replace_input';
@@ -42,6 +43,15 @@ const baplistVar3 = preprocessWordLists(badwords, goodwords, {
   considerPrecedingApostrophes: false,
   considerFollowUpApostrophes: false,
 });
+
+const overrideList1 = preprocessWordListOverrideData(
+  baplist,
+  ['hell*', 'link.co/'],
+  ['ban ananas juice'],
+  ['magic word*'],
+);
+
+console.log('Override List: ', overrideList1);
 
 test('filter standalone bad word', () => {
   expect(doesContainBadWords('kitty', baplist)).toEqual(true);
@@ -351,6 +361,23 @@ test('finding all bad words in the input', () => {
   expect(findAllBadWords('ban ananas keywords hellfish k&it_ty', baplist)).toContain('ban ananas');
   expect(findAllBadWords('ban ananas keywords hellfish k&it_ty', baplist)).toContain('*word*');
   expect(findAllBadWords('ban ananas keywords hellfish k&it_ty', baplist)).toHaveLength(4);
+});
+
+test('override a bad word list', () => {
+  expect(doesContainBadWords('kitty', baplist, overrideList1)).toEqual(true);
+  expect(doesContainBadWords('hell', baplist, overrideList1)).toEqual(false);
+  expect(doesContainBadWords('hello', baplist, overrideList1)).toEqual(false);
+  expect(doesContainBadWords('ban ananas juice', baplist, overrideList1)).toEqual(true);
+  expect(doesContainBadWords('link.co/', baplist, overrideList1)).toEqual(false);
+  expect(doesContainBadWords('magic words', baplist, overrideList1)).toEqual(false);
+  expect(doesContainBadWords('words magic words magic words', baplist, overrideList1)).toEqual(true);
+  expect(findAllBadWords('hell kitty', baplist, overrideList1)).toHaveLength(1);
+  expect(findAllBadWords('hell kitty', baplist, overrideList1)).toContain('kitty');
+  expect(findAllBadWords('hell kitty', baplist, overrideList1)).not.toContain('hell*');
+  expect(findAllBadWords('words magic words magic words', baplist, overrideList1)).toHaveLength(1);
+  expect(findAllBadWords('words magic words magic words words', baplist, overrideList1)).toHaveLength(1);
+  expect(findAllBadWords('words magic words magic words words kitty', baplist, overrideList1)).toHaveLength(2);
+  expect(findAllBadWords('words magic words magic words words', baplist, overrideList1)).toContain('*word*');
 });
 
 test('finding bad words through its locations', () => {

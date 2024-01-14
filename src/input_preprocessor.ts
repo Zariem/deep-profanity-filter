@@ -102,6 +102,7 @@ export function textToLatin(inputText: string): string {
   inputText = inputText
     .replace(/Ð/g, 'd')
     .replace(/Σ/g, 'e')
+    .replace(/Ⴚ/g, 'g')
     .replace(/Η/g, 'h')
     .replace(/Ꮰ/g, 'j')
     .replace(/Μ/g, 'm')

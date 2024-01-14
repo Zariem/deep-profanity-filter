@@ -78,6 +78,23 @@ export type ProcessedWordLists = {
 };
 
 /**
+ * The word lists and data used to modify already pre-calculated word lists by adding or removing
+ * whitelisted terms or by removing/disabling bad words from that list.
+ * This data can then be piggybacked onto an existing list in functions that find or get bad words.
+ * 
+ * Using override data is recommended if lots of different parts of code share a very similar word list,
+ * with different parts of the code having slight modifications to it, where modifications are expected to
+ * contain significantly less words than the modified, "default" list.
+ * 
+ * Can be created with `preprocessWordListOverrideData(...)`
+ */
+export type WordListOverrideData = {
+  badWordDisables: string[];
+  whitelistDisables: { [badword: string]: string[] };
+  whitelistEnables: WhitelistMap;
+};
+
+/**
  * Creates the regular expressions facilitating the search of bad words,
  * as well as the lookup table of all whitelisted words (linked to only the
  * those bad words which are contained in this whitelisted word).
@@ -116,8 +133,8 @@ export type ProcessedWordLists = {
  * Note: The apostrophe circumventions are very rarely used, so this is an
  * edge case, especially because cases where the word is not s p a c e d out are
  * handled differently.
- * @returns a mapped whitelist allowing easy lookup for all bad words
- * to see all whitelisted words that contain this bad word
+ * @returns preprocessed bad words and whitelist words, with the whitelist entries mapped
+ * to the bad words that they overlap/cover
  */
 export const preprocessWordLists = (
   badwords: string[],
@@ -171,5 +188,94 @@ export const preprocessWordLists = (
   return {
     badWordData,
     whitelistMap,
+  };
+};
+
+/**
+ * Prepares data that is piggybacked onto an existing, processed word list to modify it.
+ * This override data can then be used to disable bad words in an existing list, as well
+ * as disable existing whitelisted terms or add further whitelisted content.
+ *
+ * This feature can be used if one modifiable "default" word list is shared between many
+ * applications, while each application can modify it, especially when modifications are
+ * expected to contain significantly less words than the original "default" list.
+ *
+ * @param defaultWordList - the preprocessed word list that the next parameters will use
+ * as a base for their preprocessing. Created with `preprocessWordLists(...)`
+ * @param disabledDefaultWords - an array of strings of all bad words in the defaultWordList
+ * that should be ignored when testing strings against this list
+ * @param disabledDefaultWhitelist - an array of strings of all whitelisted terms in the
+ * defaultWordList that should not be whitelisted and instead still count as bad words
+ * @param additionalWhitelistWords - an array of strings of additional whitelist terms that
+ * should be considered "okay" even if there is a bad word in them
+ * @returns preprocessed override data that can be used in the algorithms that find, locate
+ * or replace bad words in an input string
+ */
+export const preprocessWordListOverrideData = (
+  defaultWordList: ProcessedWordLists,
+  disabledDefaultWords: string[],
+  disabledDefaultWhitelist: string[],
+  additionalWhitelistWords: string[],
+): WordListOverrideData => {
+  // make sure we only add words that really disable entries
+  const badWordDisables = [];
+  for (const disabledBadWord of disabledDefaultWords) {
+    if (defaultWordList.badWordData.findIndex((entry) => entry.word === disabledBadWord) >= 0) {
+      badWordDisables.push(disabledBadWord);
+    }
+  }
+
+  const whitelistDisables = {};
+  const whitelistEnables = {};
+  for (const defaultBadWordData of defaultWordList.badWordData) {
+    const badword = defaultBadWordData.word;
+    const badwordRegexp = defaultBadWordData.normalRegexp;
+
+    // make sure to mark any disabled whitelist entries as such,
+    // to link them to the bad word(s) that they cover and to double check that they exist in that whitelist
+    for (const disabledGoodword of disabledDefaultWhitelist) {
+      if (disabledGoodword === '') {
+        continue;
+      }
+      if (
+        disabledGoodword.match(badwordRegexp) &&
+        defaultWordList.whitelistMap[badword].findIndex((entry) => entry.word === disabledGoodword) >= 0
+      ) {
+        if (whitelistDisables[badword]) {
+          whitelistDisables[badword].push(disabledGoodword);
+        } else {
+          whitelistDisables[badword] = [disabledGoodword];
+        }
+      }
+    }
+
+    // make sure to add any new whitelisted elements and preprocess them accordingly
+    for (const goodword of additionalWhitelistWords) {
+      if (goodword === '') {
+        continue;
+      }
+      if (
+        goodword.match(badwordRegexp) && // unless the whitelisted word is already there
+        defaultWordList.whitelistMap[badword].findIndex((entry) => entry.word === goodword) < 0
+      ) {
+        const goodwordComponents = getRegExpComponents(goodword);
+        const data = {
+          word: goodword,
+          normalRegexp: getNormalRegExp(goodwordComponents),
+          strictRegexp: getCircumventionRegExp(goodwordComponents),
+        };
+        if (whitelistEnables[badword]) {
+          whitelistEnables[badword].push(data);
+        } else {
+          whitelistEnables[badword] = [data];
+        }
+      }
+    }
+  }
+
+  return {
+    badWordDisables,
+    whitelistDisables,
+    whitelistEnables,
   };
 };
