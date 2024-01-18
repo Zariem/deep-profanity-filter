@@ -256,9 +256,9 @@ export const preprocessWordListOverrideData = (
         continue;
       }
       if (
-        goodword.match(badwordRegexp) && // unless the whitelisted word is already there
-        defaultWordList.whitelistMap[badword] &&
-        defaultWordList.whitelistMap[badword].findIndex((entry) => entry.word === goodword) < 0
+        goodword.match(badwordRegexp) &&
+        (!defaultWordList.whitelistMap[badword] || // make sure the whitelisted word is not already there
+          defaultWordList.whitelistMap[badword].findIndex((entry) => entry.word === goodword) < 0)
       ) {
         const goodwordComponents = getRegExpComponents(goodword);
         const data = {
