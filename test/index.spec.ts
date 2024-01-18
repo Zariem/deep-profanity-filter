@@ -48,7 +48,7 @@ const overrideList1 = preprocessWordListOverrideData(
   baplist,
   ['hell*', 'link.co/'],
   ['ban ananas juice'],
-  ['magic word*'],
+  ['magic word*', 'something random'],
 );
 
 console.log('Override List: ', overrideList1);
