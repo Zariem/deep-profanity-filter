@@ -154,12 +154,8 @@ const findBadWordMatchData = (
   if (badWordMatchInfo.length === 0) {
     return []; // no bad word was found
   }
-  if (!whitelistMap[badwordData.word] || whitelistMap[badwordData.word].length === 0) {
-    // some bad words were found and we have no whitelisted terms for them
-    return badWordMatchInfo;
-  }
 
-  let whitelistArray = whitelistMap[badwordData.word];
+  let whitelistArray = whitelistMap[badwordData.word] || [];
 
   if (overrideData) {
     // remove all the whitelisted words that the override disables
@@ -172,6 +168,11 @@ const findBadWordMatchData = (
     if (overrideData.whitelistEnables[badwordData.word]) {
       whitelistArray = whitelistArray.concat(overrideData.whitelistEnables[badwordData.word]);
     }
+  }
+
+  if (whitelistArray.length === 0) {
+    // some bad words were found and we have no whitelisted terms for them
+    return badWordMatchInfo;
   }
 
   // if we are checking for bad word circumventions also check the specific "strict" whitelist

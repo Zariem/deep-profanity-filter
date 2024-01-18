@@ -380,6 +380,20 @@ test('override a bad word list', () => {
   expect(findAllBadWords('words magic words magic words words', baplist, overrideList1)).toContain('*word*');
 });
 
+const badwords2 = ['bla']
+const goodwords2 = []
+const baplist2 = preprocessWordLists(badwords2, goodwords2);
+const overrideList2 = preprocessWordListOverrideData(
+  baplist2,
+  [],
+  [],
+  ['bla']
+)
+
+test('use override list', () => {
+  expect(doesContainBadWords('bla', baplist2, overrideList2)).toEqual(false);
+})
+
 test('finding bad words through its locations', () => {
   expect(getBadWords(findBadWordLocations('kitty', baplist))).toEqual(findAllBadWords('kitty', baplist));
   expect(getBadWords(findBadWordLocations('hell', baplist))).toEqual(findAllBadWords('hell', baplist));
