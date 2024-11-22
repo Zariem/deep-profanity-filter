@@ -92,7 +92,7 @@ export const getRegExpComponents = (badword: string): WordRegexComponents => {
  */
 export const getNormalRegExp = (badwordComponents: WordRegexComponents): RegExp => {
   return new RegExp(
-    badwordComponents.start + badwordComponents.word.replace(/\s+/, oneOrMoreNonWordCharacters) + badwordComponents.end,
+    badwordComponents.start + badwordComponents.word.replaceAll(/\s+/g, oneOrMoreNonWordCharacters) + badwordComponents.end,
     'g',
   );
 };
