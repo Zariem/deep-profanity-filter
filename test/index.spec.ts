@@ -996,10 +996,10 @@ test('bad input for reducing repeat characters', () => {
   expect(fnRef).toThrow(Error);
   fnRef = () => reduceRepeatCharacters('hello', 1.1);
   expect(fnRef).toThrow(Error);
-  fnRef = () => reduceRepeatCharacters('hhhhhelllllloooo', 4/2);
+  fnRef = () => reduceRepeatCharacters('hhhhhelllllloooo', 4 / 2);
   expect(fnRef).not.toThrow(Error);
   expect(fnRef()).toBe('hhelloo');
-  fnRef = () => reduceRepeatCharacters('hhhhhelllllloooo', 6/2);
+  fnRef = () => reduceRepeatCharacters('hhhhhelllllloooo', 6 / 2);
   expect(fnRef).not.toThrow(Error);
   expect(fnRef()).toBe('hhhelllooo');
 });

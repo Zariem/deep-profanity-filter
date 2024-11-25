@@ -182,10 +182,10 @@ export function textToLatin(inputText: string): string {
 
 /**
  * For any given input text, reduce any repeating characters to a given maximum amount of repetitions.
- * 
+ *
  * As an example, the input string: `"heeellllooooo"` becomes: `"heelloo"` if that number is 2, or
  * `"heeelllooo"` if that number is 3, or `helo` if that number is 1.
- * 
+ *
  * For English, it is recommended to not use values lower than 2. If this preprocessing is used, make
  * sure that the bad words and allowed terms also feature at most the same number of repeated characters.
  * I.e. if using this with the number "2", there is no use of putting words like "helllo" on the lists.
@@ -198,14 +198,14 @@ export function textToLatin(inputText: string): string {
  * @throws If `maxAllowedCharsInSequence` is not an integer (such as 1.5) or if it is 0 or less.
  */
 export function reduceRepeatCharacters(inputText: string, maxAllowedCharsInSequence: number = 2): string {
-  if (!Number.isInteger(maxAllowedCharsInSequence) || (maxAllowedCharsInSequence < 1)) {
+  if (!Number.isInteger(maxAllowedCharsInSequence) || maxAllowedCharsInSequence < 1) {
     throw new Error('reduceRepeatCharacters - maxAllowedCharsInSequence needs to be an integer that is larger than 0');
   }
   // match any word character `(\w)`, then refer to the last match `\1` and check if it appears
   // n or more times `{n,}` (where n is maxAllowedCharsInSequence)
   // replace this with our matched character '$1' repeated n times
   // in normal regexp terms this would be `string.replace(/(\w)\1{2,}/g, '$1$1')` if `n = 2`
-  const regexp = new RegExp('(\\w)\\1\{' + maxAllowedCharsInSequence + ',\}', 'g');
+  const regexp = new RegExp('(\\w)\\1{' + maxAllowedCharsInSequence + ',}', 'g');
   const replacementStr = '$1'.repeat(maxAllowedCharsInSequence);
   return inputText.replace(regexp, replacementStr);
 }
