@@ -30,10 +30,21 @@ const badwords = [
   '/(?:a)?fake(.)*regex$/',
   'שלום',
 ];
-const goodwords = ['hello kitty', 'hello*', 'ban ananas juice', 'keyword', 'loanword*', '*sword*', '*wording'];
+const goodwords = [
+  'hello kitty',
+  "kit'ty",
+  'k-i.t~t-y',
+  'hello*',
+  'ban ananas juice',
+  'keyword',
+  'loanword*',
+  '*sword*',
+  '*wording',
+];
 const baplist = preprocessWordLists(badwords, goodwords);
 
 console.log(baplist);
+console.log(baplist.whitelistMap);
 
 const baplistExact = preprocessWordLists(badwords, goodwords, { checkCircumventions: false });
 
@@ -137,6 +148,38 @@ test("spaced out character don't work if another spaced character follows", () =
   expect(doesContainBadWords('a k i t t y', baplist)).toEqual(false);
   expect(doesContainBadWords('l e      k i  t  t  y', baplist)).toEqual(false);
   expect(doesContainBadWords('k i t t y s', baplist)).toEqual(false);
+});
+
+test('Whitelisted circumventions', () => {
+  expect(doesContainBadWords("kit'ty", baplist)).toEqual(false); // specifically whitelisted
+  expect(doesContainBadWords('kit"ty', baplist)).toEqual(true);
+  expect(doesContainBadWords("ki-t'ty", baplist)).toEqual(true);
+  expect(doesContainBadWords('k-i.t~t-y', baplist)).toEqual(false); // specifically whitelisted
+  expect(doesContainBadWords('k-i.t~t--y', baplist)).toEqual(true);
+  expect(doesContainBadWords('k-it~t-y', baplist)).toEqual(true);
+  expect(doesContainBadWords("k i  t ' t y", baplist)).toEqual(false); // specifically whitelisted
+  expect(doesContainBadWords("k i  t' t y", baplist)).toEqual(true); // not fully spaced out - bap
+  expect(doesContainBadWords("k i  t ' t-y", baplist)).toEqual(false);
+  expect(doesContainBadWords("k-i--t-'-t-y", baplist)).toEqual(false);
+  expect(doesContainBadWords('k - i . t ~ t - y', baplist)).toEqual(false); // specifically whitelisted
+  // deviations from whitelist are ok as long as spaces between all characters
+  expect(doesContainBadWords('k - i .-t ~ t - y', baplist)).toEqual(false);
+  expect(doesContainBadWords('k - i.-t ~ t - y', baplist)).toEqual(true); // not fully spaced out - bap
+  expect(doesContainBadWords('k--i^.t_~t^-y', baplist)).toEqual(true);
+
+  expect(doesContainBadWords("kitty kit'ty", baplist)).toEqual(true);
+  expect(doesContainBadWords("k i t t y kit'ty", baplist)).toEqual(true);
+  expect(doesContainBadWords("kit'ty kitty", baplist)).toEqual(true);
+  expect(doesContainBadWords("kit'ty k i t t y", baplist)).toEqual(true);
+  expect(doesContainBadWords('kitty k-i.t~t-y', baplist)).toEqual(true);
+  expect(doesContainBadWords('k i t t y k-i.t~t-y', baplist)).toEqual(false); // fully spaced out (parsed kittykitty)
+  expect(doesContainBadWords('k i t t y is k-i.t~t-y', baplist)).toEqual(true); // not fully spaced out
+  expect(doesContainBadWords('k-i.t~t-y kitty', baplist)).toEqual(true);
+  expect(doesContainBadWords('k-i.t~t-y k i t t y', baplist)).toEqual(false);
+  expect(doesContainBadWords('k-i.t~t-y is k i t t y', baplist)).toEqual(true);
+  expect(doesContainBadWords('k-i.t~t-y ban ananas', baplist)).toEqual(true);
+  expect(doesContainBadWords('k-i.t~t-y b a n a n a n a s', baplist)).toEqual(false);
+  expect(doesContainBadWords('k-i.t~t-y is b a n a n a n a s', baplist)).toEqual(true);
 });
 
 test('checking only exact matches', () => {
@@ -380,19 +423,14 @@ test('override a bad word list', () => {
   expect(findAllBadWords('words magic words magic words words', baplist, overrideList1)).toContain('*word*');
 });
 
-const badwords2 = ['bla']
-const goodwords2 = []
+const badwords2 = ['bla'];
+const goodwords2 = [];
 const baplist2 = preprocessWordLists(badwords2, goodwords2);
-const overrideList2 = preprocessWordListOverrideData(
-  baplist2,
-  [],
-  [],
-  ['bla']
-)
+const overrideList2 = preprocessWordListOverrideData(baplist2, [], [], ['bla']);
 
 test('use override list', () => {
   expect(doesContainBadWords('bla', baplist2, overrideList2)).toEqual(false);
-})
+});
 
 test('finding bad words through its locations', () => {
   expect(getBadWords(findBadWordLocations('kitty', baplist))).toEqual(findAllBadWords('kitty', baplist));

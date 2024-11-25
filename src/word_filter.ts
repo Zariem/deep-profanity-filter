@@ -1,7 +1,14 @@
 import { textToLatin } from './input_preprocessor';
 import { reconstructLocations, reduceInputString } from './reduce_input_string';
 import { grawlix, replaceChars } from './replace_input';
-import { BadWordData, WhitelistMap, ProcessedWordLists, WordListOverrideData } from './wordlist_preprocessor';
+import {
+  BadWordData,
+  WhitelistMap,
+  ProcessedWordLists,
+  WordListOverrideData,
+  WhitelistWordType,
+  hasWhitelistWordType,
+} from './wordlist_preprocessor';
 
 export enum InputPreprocessMethod {
   Thorough, // textToLatin (removing accents, translating foreign characters and emojis to latin letters)
@@ -102,6 +109,14 @@ const toBadWordMatchData = (badWordMatchInfo: BadWordMatchInfo) => {
 };
 
 /**
+ * Turns an object of type `BadWordMatchData` into the type `BadWordMatchInfo`.
+ * Always sets isWhitelisted to false on the newly generated MatchInfo objects.
+ */
+const toBadWordMatchInfo = (badWordMatchData: BadWordMatchData) => {
+  return Object.assign({}, badWordMatchData, { isWhitelisted: false }) as BadWordMatchInfo;
+};
+
+/**
  * Checks if the bad word is fully contained within the whitelisted word,
  * given their start indices and lengths.
  * @param badWordStartIndex - The index at which the bad word starts in the input string.
@@ -114,6 +129,114 @@ const isMatchWhitelisted = (badWordStartIndex, badWordLength, goodWordStartIndex
   return (
     badWordStartIndex >= goodWordStartIndex && badWordStartIndex + badWordLength <= goodWordStartIndex + goodWordLength
   );
+};
+
+/**
+ * Whether to check the whitelist's `Normal` regular expressions (check for a direct match),
+ * or their `Strict` regular expressions (check for a circumvention of that word), or `Both`.
+ */
+enum WhitelistCheckType {
+  Normal,
+  Strict,
+  Both,
+}
+
+/**
+ * Removes any terms related to the bad word from `badwordData` that are whitelisted by the
+ * `whitelistMap` (potentially modified by `overrideData`) from the `badWordMatchInfo` array of
+ * all matches that were found for this bad word.
+ * `Note!` Might have side effects and modify the input array `badWordMatchInfo`
+ * @param inputString - the input string for which we found any bad word matches
+ * @param badwordData - the bad word we found matches for
+ * @param badWordMatchInfo - the matches we found of this bad word.
+ * StartIndices and length need to be related to input string.
+ * @param whitelistMap - the whitelisted words to check for overlaps with any found bad words
+ * @param checkType - `Normal`, `Strict` or `Both`, defining which whitelist regular expressions to check.
+ * If normal, only the word itself is matched. If strict, only circumvention terms are checked in the
+ * whitelist. If both, both are checked.
+ * @param overrideData - (Optional) Any potential overrides to the whitelist map.
+ * @param whitelistWordType - (Optional) Only consider the whitelisted words of a specific type, e.g.
+ * `WhitelistWordType.Reduced` only considers whitelist terms that don't match the bad word directly,
+ * since they contain some special characters that, if removed, makes the term match the bad word.
+ * `WhitelistWordType.Circumvention` only considers whitelist terms that match the bad word's circumvention
+ * regular expression.
+ * @returns the `badWordMatchInfo` array without any terms that were whitelisted under the input conditions.
+ */
+const removeWhitelistedMatchesFromMatchInfos = (
+  inputString: string,
+  badwordData: BadWordData,
+  badWordMatchInfo: BadWordMatchInfo[],
+  whitelistMap: WhitelistMap,
+  checkType: WhitelistCheckType,
+  overrideData?: WordListOverrideData,
+  whitelistWordType?: WhitelistWordType,
+): BadWordMatchInfo[] => {
+  if (badWordMatchInfo.length === 0) {
+    return [];
+  }
+  let whitelistArray = whitelistMap[badwordData.word] || [];
+
+  if (overrideData) {
+    // remove all the whitelisted words that the override disables
+    if (overrideData.whitelistDisables[badwordData.word]) {
+      whitelistArray = whitelistArray.filter(
+        (element) => !overrideData.whitelistDisables[badwordData.word].includes(element.word),
+      );
+    }
+    // add all the whitelisted words that the override adds
+    if (overrideData.whitelistEnables[badwordData.word]) {
+      whitelistArray = whitelistArray.concat(overrideData.whitelistEnables[badwordData.word]);
+    }
+  }
+
+  if (whitelistWordType !== undefined) {
+    // if a type is specified, only check the whitelist terms of that type
+    whitelistArray = whitelistArray.filter((elem) => hasWhitelistWordType(elem, whitelistWordType));
+  }
+
+  if (whitelistArray.length === 0) {
+    // some bad words were found and we have no whitelisted terms for them
+    return badWordMatchInfo;
+  }
+
+  // if we are checking for bad word circumventions also check the specific "strict" whitelist
+  // that avoids blocking good content such as "s h e l l" for discovering bad content within, such as "h e l l"
+  let whitelistRegexData =
+    checkType === WhitelistCheckType.Normal
+      ? whitelistArray.map((elem) => elem.normalRegexp)
+      : whitelistArray.map((elem) => elem.strictRegexp).concat(badwordData.whitelistedStrictRegexpArray);
+
+  if (checkType === WhitelistCheckType.Both) {
+    whitelistRegexData = whitelistRegexData.concat(whitelistArray.map((elem) => elem.normalRegexp));
+  }
+
+  // iterate through the whitelist that overlaps with this bad word,
+  // based on start index and match length, we can determine if a bad word
+  // is okay to be used (i.e. whether it is whitelisted).
+  for (const whitelistRegex of whitelistRegexData) {
+    const whitelistMatches = inputString.matchAll(whitelistRegex);
+    if (whitelistMatches) {
+      for (const whitelistMatch of whitelistMatches) {
+        for (const badWordElement of badWordMatchInfo) {
+          if (
+            isMatchWhitelisted(
+              badWordElement.startIndex,
+              badWordElement.length,
+              whitelistMatch.index,
+              whitelistMatch[0].length,
+            )
+          ) {
+            badWordElement.isWhitelisted = true; // remove later, to not break the loop
+          }
+        }
+        badWordMatchInfo = badWordMatchInfo.filter((element) => !element.isWhitelisted);
+        if (badWordMatchInfo.length === 0) {
+          return []; //  early out - all bad words were whitelisted
+        }
+      }
+    }
+  }
+  return badWordMatchInfo;
 };
 
 /**
@@ -155,58 +278,15 @@ const findBadWordMatchData = (
     return []; // no bad word was found
   }
 
-  let whitelistArray = whitelistMap[badwordData.word] || [];
-
-  if (overrideData) {
-    // remove all the whitelisted words that the override disables
-    if (overrideData.whitelistDisables[badwordData.word]) {
-      whitelistArray = whitelistArray.filter(
-        (element) => !overrideData.whitelistDisables[badwordData.word].includes(element.word),
-      );
-    }
-    // add all the whitelisted words that the override adds
-    if (overrideData.whitelistEnables[badwordData.word]) {
-      whitelistArray = whitelistArray.concat(overrideData.whitelistEnables[badwordData.word]);
-    }
-  }
-
-  if (whitelistArray.length === 0) {
-    // some bad words were found and we have no whitelisted terms for them
-    return badWordMatchInfo;
-  }
-
-  // if we are checking for bad word circumventions also check the specific "strict" whitelist
-  // that avoids blocking good content such as "s h e l l" for discovering bad content within, such as "h e l l"
-  const whitelistRegexData = checkStrict
-    ? whitelistArray.map((elem) => elem.strictRegexp).concat(badwordData.whitelistedStrictRegexpArray)
-    : whitelistArray.map((elem) => elem.normalRegexp);
-
-  // iterate through the whitelist that overlaps with this bad word,
-  // based on start index and match length, we can determine if a bad word
-  // is okay to be used (i.e. whether it is whitelisted).
-  for (const whitelistRegex of whitelistRegexData) {
-    const whitelistMatches = inputString.matchAll(whitelistRegex);
-    if (whitelistMatches) {
-      for (const whitelistMatch of whitelistMatches) {
-        for (const badWordElement of badWordMatchInfo) {
-          if (
-            isMatchWhitelisted(
-              badWordElement.startIndex,
-              badWordElement.length,
-              whitelistMatch.index,
-              whitelistMatch[0].length,
-            )
-          ) {
-            badWordElement.isWhitelisted = true; // remove later, to not break the loop
-          }
-        }
-        badWordMatchInfo = badWordMatchInfo.filter((element) => !element.isWhitelisted);
-        if (badWordMatchInfo.length === 0) {
-          return []; //  early out - all bad words were whitelisted
-        }
-      }
-    }
-  }
+  const checkType = checkStrict ? WhitelistCheckType.Strict : WhitelistCheckType.Normal;
+  badWordMatchInfo = removeWhitelistedMatchesFromMatchInfos(
+    inputString,
+    badwordData,
+    badWordMatchInfo,
+    whitelistMap,
+    checkType,
+    overrideData,
+  );
 
   return badWordMatchInfo.map((match) => toBadWordMatchData(match)) as BadWordMatchData[];
 };
@@ -299,7 +379,29 @@ export const findBadWordLocations = (
             reducedData.reducedLocations,
             matchedReducedStringLocations,
           );
-          if (firstMatchOnly) {
+          // remove duplicates found of words that were the same in the normal and the reduced input string
+          actualReducedStringLocations = actualReducedStringLocations.filter(
+            (loc) =>
+              locations.findIndex(
+                (foundLoc) => foundLoc.startIndex === loc.startIndex && foundLoc.length === loc.length,
+              ) === -1,
+          );
+
+          // check if we whitelisted any specific terms that were matched
+          let reducedStringMatchInfos = actualReducedStringLocations.map((elem) => toBadWordMatchInfo(elem));
+          reducedStringMatchInfos = removeWhitelistedMatchesFromMatchInfos(
+            inputString,
+            badwordData,
+            reducedStringMatchInfos,
+            processedWordLists.whitelistMap,
+            WhitelistCheckType.Both,
+            overrideData,
+            WhitelistWordType.Reduced,
+          );
+
+          actualReducedStringLocations = reducedStringMatchInfos.map((elem) => toBadWordMatchData(elem));
+
+          if (actualReducedStringLocations.length > 0 && firstMatchOnly) {
             return [actualReducedStringLocations[0]];
           }
         }
@@ -308,17 +410,31 @@ export const findBadWordLocations = (
 
       // finally try to match the word with common circumventions, such as
       // "bad k i t t y" while ensuring words such as "k i t t y c a t" are considered bad.
-      const circumventions = findBadWordMatchData(
+      let circumventions = findBadWordMatchData(
         inputString,
         badwordData,
         processedWordLists.whitelistMap,
         true,
         overrideData,
       );
-      if (firstMatchOnly && circumventions.length > 0) {
-        return [circumventions[0]];
+      if (circumventions.length > 0) {
+        let circumventionMatchInfos = circumventions.map((elem) => toBadWordMatchInfo(elem));
+        circumventionMatchInfos = removeWhitelistedMatchesFromMatchInfos(
+          inputString,
+          badwordData,
+          circumventionMatchInfos,
+          processedWordLists.whitelistMap,
+          WhitelistCheckType.Both,
+          overrideData,
+          WhitelistWordType.Circumvention,
+        );
+        circumventions = circumventionMatchInfos.map((elem) => toBadWordMatchData(elem));
+
+        if (firstMatchOnly && circumventions.length > 0) {
+          return [circumventions[0]];
+        }
+        locations = locations.concat(circumventions);
       }
-      locations = locations.concat(circumventions);
     }
 
     // collect all the matches for this bad word
