@@ -14,6 +14,7 @@ import {
   censorText,
   InputPreprocessMethod,
   preprocessWordListOverrideData,
+  reduceRepeatCharacters,
 } from '../src';
 import { escapeStringForRegex } from '../src/regex_handler';
 import { grawlix } from '../src/replace_input';
@@ -969,4 +970,36 @@ test('turn things to latin', () => {
         'a̲b̲c̲d̲e̲f̲g̲h̲i̲j̲k̲l̲m̲n̲o̲p̲q̲r̲s̲t̲u̲v̲w̲x̲y̲z̲̲A̲B̲C̲D̲E̲F̲G̲H̲I̲J̲K̲L̲M̲N̲O̲P̲Q̲R̲S̲T̲U̲V̲W̲X̲Y̲Z̲',
     ).replace(/[a-zA-Z]/g, ''),
   ).toBe('');
+});
+
+test('reducing repeat characters', () => {
+  expect(reduceRepeatCharacters('')).toBe('');
+  expect(reduceRepeatCharacters('', 1)).toBe('');
+  expect(reduceRepeatCharacters('', 2)).toBe('');
+  expect(reduceRepeatCharacters('', 3)).toBe('');
+  expect(reduceRepeatCharacters('hello', 3)).toBe('hello');
+  expect(reduceRepeatCharacters('hello', 2)).toBe('hello');
+  expect(reduceRepeatCharacters('hello', 1)).toBe('helo');
+  expect(reduceRepeatCharacters('hello')).toBe('hello');
+  expect(reduceRepeatCharacters('ttttesttt', 3)).toBe('tttesttt');
+  expect(reduceRepeatCharacters('ttttesttt', 2)).toBe('ttestt');
+  expect(reduceRepeatCharacters('ttttesttt', 1)).toBe('test');
+  expect(reduceRepeatCharacters('ttttesttt')).toBe('ttestt');
+});
+
+test('bad input for reducing repeat characters', () => {
+  let fnRef = () => reduceRepeatCharacters('hello', 0);
+  expect(fnRef).toThrow(Error);
+  fnRef = () => reduceRepeatCharacters('hello', -1);
+  expect(fnRef).toThrow(Error);
+  fnRef = () => reduceRepeatCharacters('hello', 1.1);
+  expect(fnRef).toThrow(Error);
+  fnRef = () => reduceRepeatCharacters('hello', 1.1);
+  expect(fnRef).toThrow(Error);
+  fnRef = () => reduceRepeatCharacters('hhhhhelllllloooo', 4/2);
+  expect(fnRef).not.toThrow(Error);
+  expect(fnRef()).toBe('hhelloo');
+  fnRef = () => reduceRepeatCharacters('hhhhhelllllloooo', 6/2);
+  expect(fnRef).not.toThrow(Error);
+  expect(fnRef()).toBe('hhhelllooo');
 });

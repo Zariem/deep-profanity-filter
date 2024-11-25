@@ -179,3 +179,33 @@ export function textToLatin(inputText: string): string {
     .replace(/ʏ|ᵧ|ʸ|ч|ƴ|ỿ|ɏ|ʎ|𝐲|𝐘|ⓨ|𝔶|𝔜|𝖞|𝖄|𝔂|𝓨|𝓎|𝒴|𝕪|𝕐|ｙ|🅈|ⴘ|ү|🆈|ץ|ყ|ꭹ|ฯ|𝘆|𝗬|𝘺|𝘠|𝙮|𝙔|𝚢|𝚈|у|¥|ㄚ|ﾘ|վ|ӌ|ᖻ/g, 'y')
     .replace(/ᴢ|ᶻ|ꝫ|ᵹ|ⱬ|ȥ|ƶ|ʑ|ᵶ|ᶎ|ʐ|ɀ|𝐳|𝐙|ⓩ|𝔷|ℨ|𝖟|𝖅|𝔃|𝓩|𝓏|𝒵|𝕫|ℤ|ｚ|🅉|ƺ|🆉|չ|ፚ|ຊ|𝘇|𝗭|𝘻|𝘡|𝙯|𝙕|𝚣|𝚉|乙|ᘔ|ᗱ|շ/g, 'z');
 }
+
+/**
+ * For any given input text, reduce any repeating characters to a given maximum amount of repetitions.
+ * 
+ * As an example, the input string: `"heeellllooooo"` becomes: `"heelloo"` if that number is 2, or
+ * `"heeelllooo"` if that number is 3, or `helo` if that number is 1.
+ * 
+ * For English, it is recommended to not use values lower than 2. If this preprocessing is used, make
+ * sure that the bad words and allowed terms also feature at most the same number of repeated characters.
+ * I.e. if using this with the number "2", there is no use of putting words like "helllo" on the lists.
+ * @param inputText - The text from which to remove repeat characters.
+ * @param maxAllowedCharsInSequence - The maximum number of characters in sequence (such as "aaa", "bbb",
+ * ...) that are allowed to remain in the input string. `Recommended: 2 or 3`, depending on the language
+ * of your input text.
+ * @returns The input text with all repeat characters that occur more than the max amount in sequence
+ * removed.
+ * @throws If `maxAllowedCharsInSequence` is not an integer (such as 1.5) or if it is 0 or less.
+ */
+export function reduceRepeatCharacters(inputText: string, maxAllowedCharsInSequence: number = 2): string {
+  if (!Number.isInteger(maxAllowedCharsInSequence) || (maxAllowedCharsInSequence < 1)) {
+    throw new Error('reduceRepeatCharacters - maxAllowedCharsInSequence needs to be an integer that is larger than 0');
+  }
+  // match any word character `(\w)`, then refer to the last match `\1` and check if it appears
+  // n or more times `{n,}` (where n is maxAllowedCharsInSequence)
+  // replace this with our matched character '$1' repeated n times
+  // in normal regexp terms this would be `string.replace(/(\w)\1{2,}/g, '$1$1')` if `n = 2`
+  const regexp = new RegExp('(\\w)\\1\{' + maxAllowedCharsInSequence + ',\}', 'g');
+  const replacementStr = '$1'.repeat(maxAllowedCharsInSequence);
+  return inputText.replace(regexp, replacementStr);
+}
