@@ -155,6 +155,24 @@ const getWhitelistType = (
 };
 
 /**
+ * Tests if a word is a valid whitelist for a given bad word.
+ * @param goodword - The word to check whether it whitelists the bad word.
+ * @param badword - The bad word to check.
+ * @param checkCircumventions - Whether the whitelisted word is allowed to be a circumvention of the
+ * bad word. If false, only direct matches count.
+ * @returns True if goodword whitelists badword. False if it does not.
+ *
+ * _(Returns `true` if badword is empty string `''`)_
+ */
+export const isValidWhitelist = (goodword: string, badword: string, checkCircumventions?: boolean): boolean => {
+  const badWordComponents = getRegExpComponents(badword);
+  const badwordRegexp = getNormalRegExp(badWordComponents);
+  const circumventionRegexp = checkCircumventions ? getCircumventionRegExp(badWordComponents) : undefined;
+
+  return getWhitelistType(goodword, badwordRegexp, checkCircumventions, circumventionRegexp) !== WhitelistWordType.None;
+};
+
+/**
  * Check if the given whitelist word data has a specified type.
  * For word data types `WhitelistWordType.Reduced` or `WhitelistWordType.Circumvention`
  * additionally check if the type we're checking against is `WhitelistWordType.ReducedAndCircumvention`

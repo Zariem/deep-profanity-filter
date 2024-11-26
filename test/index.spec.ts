@@ -15,6 +15,7 @@ import {
   InputPreprocessMethod,
   preprocessWordListOverrideData,
   reduceRepeatCharacters,
+  isValidWhitelist,
 } from '../src';
 import { escapeStringForRegex } from '../src/regex_handler';
 import { grawlix } from '../src/replace_input';
@@ -1083,4 +1084,53 @@ test('bad input for reducing repeat characters', () => {
   fnRef = () => reduceRepeatCharacters('hhhhhelllllloooo', 6 / 2);
   expect(fnRef).not.toThrow(Error);
   expect(fnRef()).toBe('hhhelllooo');
+});
+
+test('isValidWhitelist', () => {
+  expect(isValidWhitelist('', '')).toBe(true);
+  expect(isValidWhitelist('text', '')).toBe(true);
+  expect(isValidWhitelist('test', '')).toBe(true);
+
+  expect(isValidWhitelist('', 'text')).toBe(false);
+  expect(isValidWhitelist('text', 'text')).toBe(true);
+
+  expect(isValidWhitelist('', 'test')).toBe(false);
+  expect(isValidWhitelist('test', 'test')).toBe(true);
+  expect(isValidWhitelist('attest', 'test')).toBe(false);
+  expect(isValidWhitelist('testing', 'test')).toBe(false);
+  expect(isValidWhitelist('attesting', 'test')).toBe(false);
+  expect(isValidWhitelist('test this', 'test')).toBe(true);
+  expect(isValidWhitelist('this test', 'test')).toBe(true);
+  expect(isValidWhitelist('this test this', 'test')).toBe(true);
+  expect(isValidWhitelist('text', 'test')).toBe(false);
+
+  expect(isValidWhitelist('', 'test*')).toBe(false);
+  expect(isValidWhitelist('test', 'test*')).toBe(true);
+  expect(isValidWhitelist('attest', 'test*')).toBe(false);
+  expect(isValidWhitelist('testing', 'test*')).toBe(true);
+  expect(isValidWhitelist('attesting', 'test*')).toBe(false);
+  expect(isValidWhitelist('test this', 'test*')).toBe(true);
+  expect(isValidWhitelist('this test', 'test*')).toBe(true);
+  expect(isValidWhitelist('this test this', 'test*')).toBe(true);
+  expect(isValidWhitelist('text', 'test*')).toBe(false);
+
+  expect(isValidWhitelist('', '*test')).toBe(false);
+  expect(isValidWhitelist('test', '*test')).toBe(true);
+  expect(isValidWhitelist('attest', '*test')).toBe(true);
+  expect(isValidWhitelist('testing', '*test')).toBe(false);
+  expect(isValidWhitelist('attesting', '*test')).toBe(false);
+  expect(isValidWhitelist('test this', '*test')).toBe(true);
+  expect(isValidWhitelist('this test', '*test')).toBe(true);
+  expect(isValidWhitelist('this test this', '*test')).toBe(true);
+  expect(isValidWhitelist('text', '*test')).toBe(false);
+
+  expect(isValidWhitelist('', '*test*')).toBe(false);
+  expect(isValidWhitelist('test', '*test*')).toBe(true);
+  expect(isValidWhitelist('attest', '*test*')).toBe(true);
+  expect(isValidWhitelist('testing', '*test*')).toBe(true);
+  expect(isValidWhitelist('attesting', '*test*')).toBe(true);
+  expect(isValidWhitelist('test this', '*test*')).toBe(true);
+  expect(isValidWhitelist('this test', '*test*')).toBe(true);
+  expect(isValidWhitelist('this test this', '*test*')).toBe(true);
+  expect(isValidWhitelist('text', '*test*')).toBe(false);
 });
