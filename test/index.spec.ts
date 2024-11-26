@@ -800,6 +800,48 @@ test('replace bad words after reducing repeat characters', () => {
   ).toEqual('-'.repeat('word'.length));
 });
 
+test('bad input for reducing repeat characters', () => {
+  let fnRef = () =>
+    censorText('wwwwwwoorrrrrd', baplist, {
+      reduceRepeatCharactersTo: 0,
+      replacementType: WordReplacementType.RepeatCharacter,
+    });
+  expect(fnRef).toThrow(Error);
+  fnRef = () =>
+    censorText('wwwwwwoorrrrrd', baplist, {
+      reduceRepeatCharactersTo: -1,
+      replacementType: WordReplacementType.RepeatCharacter,
+    });
+  expect(fnRef).toThrow(Error);
+  fnRef = () =>
+    censorText('wwwwwwoorrrrrd', baplist, {
+      reduceRepeatCharactersTo: 1.1,
+      replacementType: WordReplacementType.RepeatCharacter,
+    });
+  expect(fnRef).toThrow(Error);
+  fnRef = () =>
+    censorText('wwwwwwoorrrrrd', baplist, {
+      reduceRepeatCharactersTo: 4 / 2,
+      replacementType: WordReplacementType.RepeatCharacter,
+    });
+  expect(fnRef).not.toThrow(Error);
+  expect(fnRef()).toBe('wwwwwwoorrrrrd');
+  fnRef = () =>
+    censorText('wwwwwwoorrrrrd', baplist, {
+      reduceRepeatCharactersTo: 6 / 2,
+      replacementType: WordReplacementType.RepeatCharacter,
+    });
+  expect(fnRef).not.toThrow(Error);
+  expect(fnRef()).toBe('wwwwwwoorrrrrd');
+  fnRef = () =>
+    censorText('wwwwwwoorrrrrd', baplist, {
+      reduceRepeatCharactersTo: 15 / 15,
+      replacementType: WordReplacementType.RepeatCharacter,
+    });
+  expect(fnRef).not.toThrow(Error);
+  expect(fnRef()).toBe('-'.repeat('word'.length));
+});
+
 test('replace bad words with weird alphabets', () => {
   expect(textToLatin('ᖽᐸ')).toEqual('k');
   expect(
