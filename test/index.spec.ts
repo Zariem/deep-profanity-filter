@@ -761,6 +761,45 @@ test('replace bad words only if capitalisation matches', () => {
   ).toEqual('He.L-l wHAt a kIt~tY mY - - - -');
 });
 
+test('replace bad words after reducing repeat characters', () => {
+  expect(
+    censorText('kitttttty', baplist, {
+      reduceRepeatCharactersTo: 1,
+      replacementType: WordReplacementType.RepeatCharacter,
+    }),
+  ).toEqual('kitttttty'); // no bad word found if reduced to "kity"
+  expect(
+    censorText('kitttttty', baplist, {
+      reduceRepeatCharactersTo: 2,
+      replacementType: WordReplacementType.RepeatCharacter,
+    }),
+  ).toEqual('-'.repeat('kitty'.length));
+  expect(
+    censorText('kitttttty', baplist, {
+      reduceRepeatCharactersTo: 3,
+      replacementType: WordReplacementType.RepeatCharacter,
+    }),
+  ).toEqual('kitttttty'); // no bad word found if reduced to "kittty"
+  expect(
+    censorText('wwwwwwoorrrrrd', baplist, {
+      reduceRepeatCharactersTo: 3,
+      replacementType: WordReplacementType.RepeatCharacter,
+    }),
+  ).toEqual('wwwwwwoorrrrrd'); // no bad word found if reduced to "wwwoorrrd"
+  expect(
+    censorText('wwwwwwoorrrrrd', baplist, {
+      reduceRepeatCharactersTo: 2,
+      replacementType: WordReplacementType.RepeatCharacter,
+    }),
+  ).toEqual('wwwwwwoorrrrrd'); // no bad word found if reduced to "wwoorrd"
+  expect(
+    censorText('wwwwwwoorrrrrd', baplist, {
+      reduceRepeatCharactersTo: 1,
+      replacementType: WordReplacementType.RepeatCharacter,
+    }),
+  ).toEqual('-'.repeat('word'.length));
+});
+
 test('replace bad words with weird alphabets', () => {
   expect(textToLatin('ᖽᐸ')).toEqual('k');
   expect(

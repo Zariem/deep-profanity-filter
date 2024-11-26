@@ -1,4 +1,4 @@
-import { textToLatin } from './input_preprocessor';
+import { reduceRepeatCharacters, textToLatin } from './input_preprocessor';
 import { reconstructLocations, reduceInputString } from './reduce_input_string';
 import { grawlix, replaceChars } from './replace_input';
 import {
@@ -62,6 +62,19 @@ export interface WordReplacementOptions {
  * the bad word list. `Thorough` uses the `textToLatin()` function to remove text accents, translate letter emojis and
  * any other fancy unicode fonts to latin before testing for bad words.
  * `ExactMatch` matches the input string against the bad word list exactly.
+ * @param reduceRepeatCharactersTo - (Default: `undefined` meaning repeat characters are not modified.)
+ * Otherwise required to be a number >= 1. `Will throw an error if this number is <= 0.`
+ * The amount of characters a repeating sequence of characters (e.g. "aaaabcc") is reduced to in _*every*_ input string.
+ * (e.g. "abc" if the number is 1, "aabcc" if the number is 2, "aaabcc" if the number is 3, etc.)
+ * This reduction will be applied after any other input preprocess method. (Uses function `reduceRepeatCharacters(...)`)
+ * 
+ * `Important:` keep in mind that reducing to 1
+ * repeat character will likely result in mismatches/false positives ("loot" -> "lot"). Depending on the language of the
+ * input, this number should be around 2 or 3.
+ * 
+ * `Note:` when setting this number to 1 or larger, keep in mind that all words in your filter need to adhere to this,
+ * so if you set the number to 2, putting "princessship" on the bad word list won't take effect, as any such input would
+ * get reduced to "princesship".
  * @param replacementMethod - (Default: `WordReplacementMethod.ReplaceAll`) Used to select whether to replace the
  * whole word, or keep the first (and last) characters from the bad word intact.
  * @param replacementType - (Default: `WordReplacementType.Grawlix`) Used to select whether to replace the
@@ -72,6 +85,7 @@ export interface WordReplacementOptions {
  */
 export interface WordCensorOptions {
   inputPreprocessMethod?: InputPreprocessMethod;
+  reduceRepeatCharactersTo?: number,
   replacementMethod?: WordReplacementMethod;
   replacementType?: WordReplacementType;
   replacementRepeatCharacter?: string;
@@ -586,6 +600,19 @@ export const replaceBadWords = (
  * any other fancy unicode fonts to latin before testing for bad words. Note: If non-latin characters are found,
  * the censored text will be returned all in lower case and in latin letters.
  * `ExactMatch` matches the input string against the bad word list exactly.
+ * @param reduceRepeatCharactersTo - (Default: `undefined` meaning repeat characters are not modified.)
+ * Otherwise required to be a number >= 1. `Will throw an error if this number is <= 0.`
+ * The amount of characters a repeating sequence of characters (e.g. "aaaabcc") is reduced to in _*every*_ input string.
+ * (e.g. "abc" if the number is 1, "aabcc" if the number is 2, "aaabcc" if the number is 3, etc.)
+ * This reduction will be applied after any other input preprocess method. (Uses function `reduceRepeatCharacters(...)`)
+ * 
+ * `Important:` keep in mind that reducing to 1
+ * repeat character will likely result in mismatches/false positives ("loot" -> "lot"). Depending on the language of the
+ * input, this number should be around 2 or 3.
+ * 
+ * `Note:` when setting this number to 1 or larger, keep in mind that all words in your filter need to adhere to this,
+ * so if you set the number to 2, putting "princessship" on the bad word list won't take effect, as any such input would
+ * get reduced to "princesship".
  * @param replacementMethod - (Default: `WordReplacementMethod.ReplaceAll`) Used to select whether to replace the
  * whole word, or keep the first (and last) characters from the bad word intact.
  * @param replacementType - (Default: `WordReplacementType.Grawlix`) Used to select whether to replace the
@@ -602,6 +629,7 @@ export const censorText = (
   processedWordLists: ProcessedWordLists,
   {
     inputPreprocessMethod = InputPreprocessMethod.CaseInsensitive,
+    reduceRepeatCharactersTo = undefined,
     replacementMethod = WordReplacementMethod.ReplaceAll,
     replacementType = WordReplacementType.Grawlix,
     replacementRepeatCharacter = '-',
@@ -613,6 +641,9 @@ export const censorText = (
     stringToScan = stringToScan.toLowerCase();
   } else if (inputPreprocessMethod === InputPreprocessMethod.Thorough) {
     stringToScan = textToLatin(inputString);
+  }
+  if (reduceRepeatCharactersTo !== undefined) {
+    stringToScan = reduceRepeatCharacters(stringToScan, reduceRepeatCharactersTo);
   }
   const locations = findBadWordLocations(stringToScan, processedWordLists, { overrideData });
 
