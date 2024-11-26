@@ -67,11 +67,11 @@ export interface WordReplacementOptions {
  * The amount of characters a repeating sequence of characters (e.g. "aaaabcc") is reduced to in _*every*_ input string.
  * (e.g. "abc" if the number is 1, "aabcc" if the number is 2, "aaabcc" if the number is 3, etc.)
  * This reduction will be applied after any other input preprocess method. (Uses function `reduceRepeatCharacters(...)`)
- * 
+ *
  * `Important:` keep in mind that reducing to 1
  * repeat character will likely result in mismatches/false positives ("loot" -> "lot"). Depending on the language of the
  * input, this number should be around 2 or 3.
- * 
+ *
  * `Note:` when setting this number to 1 or larger, keep in mind that all words in your filter need to adhere to this,
  * so if you set the number to 2, putting "princessship" on the bad word list won't take effect, as any such input would
  * get reduced to "princesship".
@@ -85,7 +85,7 @@ export interface WordReplacementOptions {
  */
 export interface WordCensorOptions {
   inputPreprocessMethod?: InputPreprocessMethod;
-  reduceRepeatCharactersTo?: number,
+  reduceRepeatCharactersTo?: number;
   replacementMethod?: WordReplacementMethod;
   replacementType?: WordReplacementType;
   replacementRepeatCharacter?: string;
@@ -605,11 +605,11 @@ export const replaceBadWords = (
  * The amount of characters a repeating sequence of characters (e.g. "aaaabcc") is reduced to in _*every*_ input string.
  * (e.g. "abc" if the number is 1, "aabcc" if the number is 2, "aaabcc" if the number is 3, etc.)
  * This reduction will be applied after any other input preprocess method. (Uses function `reduceRepeatCharacters(...)`)
- * 
+ *
  * `Important:` keep in mind that reducing to 1
  * repeat character will likely result in mismatches/false positives ("loot" -> "lot"). Depending on the language of the
  * input, this number should be around 2 or 3.
- * 
+ *
  * `Note:` when setting this number to 1 or larger, keep in mind that all words in your filter need to adhere to this,
  * so if you set the number to 2, putting "princessship" on the bad word list won't take effect, as any such input would
  * get reduced to "princesship".
