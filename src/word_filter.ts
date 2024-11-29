@@ -208,11 +208,6 @@ const removeWhitelistedMatchesFromMatchInfos = (
     whitelistArray = whitelistArray.filter((elem) => hasWhitelistWordType(elem, whitelistWordType));
   }
 
-  if (whitelistArray.length === 0) {
-    // some bad words were found and we have no whitelisted terms for them
-    return badWordMatchInfo;
-  }
-
   // if we are checking for bad word circumventions also check the specific "strict" whitelist
   // that avoids blocking good content such as "s h e l l" for discovering bad content within, such as "h e l l"
   let whitelistRegexData =
@@ -303,6 +298,47 @@ const findBadWordMatchData = (
   );
 
   return badWordMatchInfo.map((match) => toBadWordMatchData(match)) as BadWordMatchData[];
+};
+
+/**
+ * Figure out if the good word matches the bad word in its normal form
+ * or if it represents a variant that reduces to the bad word (by removing special characters)
+ * or if it represents a circumvention that spaces out the bad word.
+ *
+ * @param goodword - the whitelist term
+ * @param badwordData - the bad word's regular expressions, created with `getBadWordData(...)`
+ * @returns `WhitelistWordType.None` if the whitelist term does not match this bad word,
+ * `WhitelistWordType.Normal` if the term matches the bad word in its normal form,
+ * `WhitelistWordType.Reduced` if the term without special characters (reduced string) matches the word,
+ * `WhitelistWordType.Circumvention` if the whitelisted word matches the bad word's circumvention regexp,
+ * `WhitelistWordType.ReducedAndCircumvention` if it matches both the reduced string and the circumvention.
+ */
+export const getWhitelistType = (
+  goodword: string,
+  badwordData: BadWordData,
+) => {
+  // Figure out if the good word matches the bad word in its normal form
+  // or if it represents a variant that reduces to the bad word (by removing special characters)
+  // or if it represents a circumvention that spaces out the bad word.
+  let whitelistType = WhitelistWordType.None;
+  if (goodword.match(badwordData.normalRegexp)) {
+    whitelistType = WhitelistWordType.Normal;
+  } else if (badwordData.strictRegexp) {
+    const reducedGoodwordData = reduceInputString(goodword);
+    if (reducedGoodwordData.reducedInput.match(badwordData.normalRegexp)) {
+      whitelistType = WhitelistWordType.Reduced;
+    }
+    // using findBadWordMatchData as the integrated circumvention whitelist regexps need to be checked
+    // for edge cases such as s h e l l (fully spaced out words that contain a bad word, parsed "shell") 
+    const circumventionMatches = findBadWordMatchData(goodword, badwordData, {}, true);
+    if (circumventionMatches.length > 0) {
+      whitelistType =
+        whitelistType === WhitelistWordType.Reduced
+          ? WhitelistWordType.ReducedAndCircumvention
+          : WhitelistWordType.Circumvention;
+    }
+  }
+  return whitelistType;
 };
 
 /**

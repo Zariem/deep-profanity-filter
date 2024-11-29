@@ -142,6 +142,10 @@ test('spaced out characters get bapped', () => {
   expect(doesContainBadWords("k.i-t't%y", baplist)).toEqual(true);
   expect(doesContainBadWords('k..i t/t<y', baplist)).toEqual(true);
   expect(doesContainBadWords('le      k i  t  t  y', baplist)).toEqual(true);
+  expect(doesContainBadWords('a $ $ h o l e', baplist)).toEqual(true);
+  expect(doesContainBadWords('a $ $ h o l e sa', baplist)).toEqual(true);
+  expect(doesContainBadWords('as a $ $ h o l e', baplist)).toEqual(true);
+  expect(doesContainBadWords('as a $ $ h o l e uwu', baplist)).toEqual(true);
 });
 
 test("spaced out character don't work if another spaced character follows", () => {
@@ -150,6 +154,9 @@ test("spaced out character don't work if another spaced character follows", () =
   expect(doesContainBadWords('a k i t t y', baplist)).toEqual(false);
   expect(doesContainBadWords('l e      k i  t  t  y', baplist)).toEqual(false);
   expect(doesContainBadWords('k i t t y s', baplist)).toEqual(false);
+  expect(doesContainBadWords('a $ $ h o l e s', baplist)).toEqual(false);
+  expect(doesContainBadWords('s a $ $ h o l e', baplist)).toEqual(false);
+  expect(doesContainBadWords('a s a $ $ h o l e u w u', baplist)).toEqual(false);
 });
 
 test('Whitelisted circumventions', () => {
@@ -469,8 +476,14 @@ test('replace bad words with grawlix', () => {
     replaceBadWords(
       'a .-~h*e\\l---l~-. ^°-.k+itt`y.. cat',
       findBadWordLocations('a .-~h*e\\l---l~-. ^°-.k+itt`y.. cat', baplist),
+    ), // "hell*" does not get hit because fully spaced out, it's parsed "ahell"
+  ).toEqual('a .-~h*e\\l---l~-. ^°-.' + grawlix('k+itt`y') + '.. cat');
+  expect(
+    replaceBadWords(
+      'the .-~h*e\\l---l~-. ^°-.k+itt`y.. cat',
+      findBadWordLocations('the .-~h*e\\l---l~-. ^°-.k+itt`y.. cat', baplist),
     ),
-  ).toEqual('a .-~' + grawlix('h*e\\l---l') + '~-. ^°-.' + grawlix('k+itt`y') + '.. cat');
+  ).toEqual('the .-~' + grawlix('h*e\\l---l') + '~-. ^°-.' + grawlix('k+itt`y') + '.. cat');
 });
 
 test('equality of replacement function with the tidier function', () => {
@@ -499,8 +512,14 @@ test('equality of replacement function with the tidier function', () => {
     replaceBadWords(
       'a .-~h*e\\l---l~-. ^°-.k+itt`y.. cat',
       findBadWordLocations('a .-~h*e\\l---l~-. ^°-.k+itt`y.. cat', baplist),
-    ),
+    ), // "hell*" does not get hit because fully spaced out, it's parsed "ahell"
   ).toEqual(censorText('a .-~h*e\\l---l~-. ^°-.k+itt`y.. cat', baplist));
+  expect(
+    replaceBadWords(
+      'the .-~h*e\\l---l~-. ^°-.k+itt`y.. cat',
+      findBadWordLocations('the .-~h*e\\l---l~-. ^°-.k+itt`y.. cat', baplist),
+    ),
+  ).toEqual(censorText('the .-~h*e\\l---l~-. ^°-.k+itt`y.. cat', baplist));
 });
 
 test('replace bad words with repeat character', () => {
@@ -542,8 +561,13 @@ test('replace bad words with repeat character', () => {
   expect(
     censorText('a .-~h*e\\l---l~-. ^°-.k+itt`y.. cat', baplist, {
       replacementType: WordReplacementType.RepeatCharacter,
+    }), // "hell*" does not get hit because fully spaced out, it's parsed "ahell"
+  ).toEqual('a .-~h*e\\l---l~-. ^°-.-+---`-.. cat');
+  expect(
+    censorText('the .-~h*e\\l---l~-. ^°-.k+itt`y.. cat', baplist, {
+      replacementType: WordReplacementType.RepeatCharacter,
     }),
-  ).toEqual('a .-~-*-\\-----~-. ^°-.-+---`-.. cat');
+  ).toEqual('the .-~-*-\\-----~-. ^°-.-+---`-.. cat');
 });
 
 test('replace bad words with custom repeat character', () => {
@@ -593,8 +617,14 @@ test('replace bad words with custom repeat character', () => {
     censorText('a .-~h*e\\l---l~-. ^°-.k+itt`y.. cat', baplist, {
       replacementType: WordReplacementType.RepeatCharacter,
       replacementRepeatCharacter: '\\',
+    }), // "hell*" does not get hit because fully spaced out, it's parsed "ahell"
+  ).toEqual('a .-~h*e\\l---l~-. ^°-.\\+\\\\\\`\\.. cat');
+  expect(
+    censorText('the .-~h*e\\l---l~-. ^°-.k+itt`y.. cat', baplist, {
+      replacementType: WordReplacementType.RepeatCharacter,
+      replacementRepeatCharacter: '\\',
     }),
-  ).toEqual('a .-~\\*\\\\\\---\\~-. ^°-.\\+\\\\\\`\\.. cat');
+  ).toEqual('the .-~\\*\\\\\\---\\~-. ^°-.\\+\\\\\\`\\.. cat');
 });
 
 test('replace bad words but keep first and/or last characters', () => {
@@ -627,8 +657,14 @@ test('replace bad words but keep first and/or last characters', () => {
     censorText('a .-~h*e\\l---l~-. ^°-.k+itt`y.. cat', baplist, {
       replacementMethod: WordReplacementMethod.KeepFirstAndLastCharacter,
       replacementType: WordReplacementType.RepeatCharacter,
+    }), // "hell*" does not get hit because fully spaced out, it's parsed "ahell"
+  ).toEqual('a .-~h*e\\l---l~-. ^°-.k+---`y.. cat');
+  expect(
+    censorText('the .-~h*e\\l---l~-. ^°-.k+itt`y.. cat', baplist, {
+      replacementMethod: WordReplacementMethod.KeepFirstAndLastCharacter,
+      replacementType: WordReplacementType.RepeatCharacter,
     }),
-  ).toEqual('a .-~h*-\\----l~-. ^°-.k+---`y.. cat');
+  ).toEqual('the .-~h*-\\----l~-. ^°-.k+---`y.. cat');
 });
 
 test('replace bad words regardless of capitalisation', () => {
@@ -1104,6 +1140,63 @@ test('isValidWhitelist', () => {
   expect(isValidWhitelist('this test this', 'test')).toBe(true);
   expect(isValidWhitelist('text', 'test')).toBe(false);
 
+  // circumventions when not checking for circumventions:
+  expect(isValidWhitelist('te\'st', 'test', { checkCircumventions: false })).toBe(false);
+  expect(isValidWhitelist('t-e-s-t', 'test', { checkCircumventions: false })).toBe(false);
+  expect(isValidWhitelist('te~s^t', 'test', { checkCircumventions: false })).toBe(false);
+  expect(isValidWhitelist('t e s t', 'test', { checkCircumventions: false })).toBe(false);
+  expect(isValidWhitelist('t e s t s', 'test', { checkCircumventions: false })).toBe(false);
+  expect(isValidWhitelist('a t e s t', 'test', { checkCircumventions: false })).toBe(false);
+  expect(isValidWhitelist('a t e s t s', 'test', { checkCircumventions: false })).toBe(false);
+
+  // circumventions when checking for circumventions
+  expect(isValidWhitelist('te\'st', 'test')).toBe(true);
+  expect(isValidWhitelist('t-e-s-t', 'test')).toBe(true);
+  expect(isValidWhitelist('te~s^t', 'test')).toBe(true);
+  expect(isValidWhitelist('t e s t', 'test')).toBe(true);
+  expect(isValidWhitelist('t e s t s a', 'test')).toBe(false);
+  expect(isValidWhitelist('k i t t y a', 'test',)).toBe(false);
+  expect(isValidWhitelist('a t e s t', 'test')).toBe(false);
+  expect(isValidWhitelist('a t e s t s', 'test')).toBe(false);
+
+  expect(isValidWhitelist('te*', 'test')).toBe(false); // these negate the bad word fully,
+  expect(isValidWhitelist('tes*', 'test')).toBe(false); // which is not the spirit of a whitelist
+  expect(isValidWhitelist('test*', 'test')).toBe(true);
+  expect(isValidWhitelist('*test', 'test')).toBe(true);
+  expect(isValidWhitelist('*est', 'test')).toBe(false); // same here
+  expect(isValidWhitelist('*st', 'test')).toBe(false); // same here
+  expect(isValidWhitelist('*test*', 'test')).toBe(true);
+  expect(isValidWhitelist('*est*', 'test')).toBe(false); // same here
+  expect(isValidWhitelist('*st*', 'test')).toBe(false); // same here
+
+  expect(isValidWhitelist('attes*', 'test')).toBe(false);
+  expect(isValidWhitelist('attest*', 'test')).toBe(false);
+  expect(isValidWhitelist('*attest', 'test')).toBe(false);
+  expect(isValidWhitelist('*attes', 'test')).toBe(false);
+  expect(isValidWhitelist('*attest*', 'test')).toBe(false);
+  expect(isValidWhitelist('*attes*', 'test')).toBe(false);
+
+  expect(isValidWhitelist('testing*', 'test')).toBe(false);
+  expect(isValidWhitelist('esting*', 'test')).toBe(false);
+  expect(isValidWhitelist('*testing', 'test')).toBe(false);
+  expect(isValidWhitelist('*esting', 'test')).toBe(false);
+  expect(isValidWhitelist('*testing*', 'test')).toBe(false);
+  expect(isValidWhitelist('*esting*', 'test')).toBe(false);
+
+  expect(isValidWhitelist('test this*', 'test')).toBe(true);
+  expect(isValidWhitelist('this test*', 'test')).toBe(true);
+  expect(isValidWhitelist('this test this*', 'test')).toBe(true);
+  expect(isValidWhitelist('*test this', 'test')).toBe(true);
+  expect(isValidWhitelist('*this test', 'test')).toBe(true);
+  expect(isValidWhitelist('*this test this', 'test')).toBe(true);
+  expect(isValidWhitelist('*test this*', 'test')).toBe(true);
+  expect(isValidWhitelist('*this test*', 'test')).toBe(true);
+  expect(isValidWhitelist('*this test this*', 'test')).toBe(true);
+
+  expect(isValidWhitelist('text*', 'test')).toBe(false);
+  expect(isValidWhitelist('*text', 'test')).toBe(false);
+  expect(isValidWhitelist('*text*', 'test')).toBe(false);
+
   expect(isValidWhitelist('', 'test*')).toBe(false);
   expect(isValidWhitelist('test', 'test*')).toBe(true);
   expect(isValidWhitelist('attest', 'test*')).toBe(false);
@@ -1113,6 +1206,52 @@ test('isValidWhitelist', () => {
   expect(isValidWhitelist('this test', 'test*')).toBe(true);
   expect(isValidWhitelist('this test this', 'test*')).toBe(true);
   expect(isValidWhitelist('text', 'test*')).toBe(false);
+  
+  // circumventions when not checking for circumventions:
+  expect(isValidWhitelist('te\'st', 'test*', { checkCircumventions: false })).toBe(false);
+  expect(isValidWhitelist('t-e-s-t', 'test*', { checkCircumventions: false })).toBe(false);
+  expect(isValidWhitelist('te~s^t', 'test*', { checkCircumventions: false })).toBe(false);
+  expect(isValidWhitelist('t e s t', 'test*', { checkCircumventions: false })).toBe(false);
+  expect(isValidWhitelist('t e s t s', 'test*', { checkCircumventions: false })).toBe(false);
+  expect(isValidWhitelist('a t e s t', 'test*', { checkCircumventions: false })).toBe(false);
+  expect(isValidWhitelist('a t e s t s', 'test*', { checkCircumventions: false })).toBe(false);
+
+  // circumventions when checking for circumventions
+  expect(isValidWhitelist('te\'st', 'test*')).toBe(true);
+  expect(isValidWhitelist('t-e-s-t', 'test*')).toBe(true);
+  expect(isValidWhitelist('te~s^t', 'test*')).toBe(true);
+  expect(isValidWhitelist('t e s t', 'test*')).toBe(true);
+  expect(isValidWhitelist('t e s t s', 'test*')).toBe(true);
+  expect(isValidWhitelist('a t e s t', 'test*')).toBe(false);
+  expect(isValidWhitelist('a t e s t s', 'test*')).toBe(false);
+
+  expect(isValidWhitelist('attes*', 'test*')).toBe(false);
+  expect(isValidWhitelist('attest*', 'test*')).toBe(false);
+  expect(isValidWhitelist('*attest', 'test*')).toBe(false);
+  expect(isValidWhitelist('*attes', 'test*')).toBe(false);
+  expect(isValidWhitelist('*attest*', 'test*')).toBe(false);
+  expect(isValidWhitelist('*attes*', 'test*')).toBe(false);
+
+  expect(isValidWhitelist('testing*', 'test*')).toBe(true);
+  expect(isValidWhitelist('esting*', 'test*')).toBe(false);
+  expect(isValidWhitelist('*testing', 'test*')).toBe(true);
+  expect(isValidWhitelist('*esting', 'test*')).toBe(false);
+  expect(isValidWhitelist('*testing*', 'test*')).toBe(true);
+  expect(isValidWhitelist('*esting*', 'test*')).toBe(false);
+
+  expect(isValidWhitelist('test this*', 'test*')).toBe(true);
+  expect(isValidWhitelist('this test*', 'test*')).toBe(true);
+  expect(isValidWhitelist('this test this*', 'test*')).toBe(true);
+  expect(isValidWhitelist('*test this', 'test*')).toBe(true);
+  expect(isValidWhitelist('*this test', 'test*')).toBe(true);
+  expect(isValidWhitelist('*this test this', 'test*')).toBe(true);
+  expect(isValidWhitelist('*test this*', 'test*')).toBe(true);
+  expect(isValidWhitelist('*this test*', 'test*')).toBe(true);
+  expect(isValidWhitelist('*this test this*', 'test*')).toBe(true);
+  
+  expect(isValidWhitelist('text*', 'test*')).toBe(false);
+  expect(isValidWhitelist('*text', 'test*')).toBe(false);
+  expect(isValidWhitelist('*text*', 'test*')).toBe(false);
 
   expect(isValidWhitelist('', '*test')).toBe(false);
   expect(isValidWhitelist('test', '*test')).toBe(true);
@@ -1124,6 +1263,52 @@ test('isValidWhitelist', () => {
   expect(isValidWhitelist('this test this', '*test')).toBe(true);
   expect(isValidWhitelist('text', '*test')).toBe(false);
 
+  // circumventions when not checking for circumventions:
+  expect(isValidWhitelist('te\'st', '*test', { checkCircumventions: false })).toBe(false);
+  expect(isValidWhitelist('t-e-s-t', '*test', { checkCircumventions: false })).toBe(false);
+  expect(isValidWhitelist('te~s^t', '*test', { checkCircumventions: false })).toBe(false);
+  expect(isValidWhitelist('t e s t', '*test', { checkCircumventions: false })).toBe(false);
+  expect(isValidWhitelist('t e s t s', '*test', { checkCircumventions: false })).toBe(false);
+  expect(isValidWhitelist('a t e s t', '*test', { checkCircumventions: false })).toBe(false);
+  expect(isValidWhitelist('a t e s t s', '*test', { checkCircumventions: false })).toBe(false);
+
+  // circumventions when checking for circumventions
+  expect(isValidWhitelist('te\'st', '*test')).toBe(true);
+  expect(isValidWhitelist('t-e-s-t', '*test')).toBe(true);
+  expect(isValidWhitelist('te~s^t', '*test')).toBe(true);
+  expect(isValidWhitelist('t e s t', '*test')).toBe(true);
+  expect(isValidWhitelist('t e s t s', '*test')).toBe(false);
+  expect(isValidWhitelist('a t e s t', '*test')).toBe(true);
+  expect(isValidWhitelist('a t e s t s', '*test')).toBe(false);
+
+  expect(isValidWhitelist('attes*', '*test')).toBe(false);
+  expect(isValidWhitelist('attest*', '*test')).toBe(true);
+  expect(isValidWhitelist('*attest', '*test')).toBe(true);
+  expect(isValidWhitelist('*attes', '*test')).toBe(false);
+  expect(isValidWhitelist('*attest*', '*test')).toBe(true);
+  expect(isValidWhitelist('*attes*', '*test')).toBe(false);
+
+  expect(isValidWhitelist('testing*', '*test')).toBe(false);
+  expect(isValidWhitelist('esting*', '*test')).toBe(false);
+  expect(isValidWhitelist('*testing', '*test')).toBe(false);
+  expect(isValidWhitelist('*esting', '*test')).toBe(false);
+  expect(isValidWhitelist('*testing*', '*test')).toBe(false);
+  expect(isValidWhitelist('*esting*', '*test')).toBe(false);
+
+  expect(isValidWhitelist('test this*', '*test')).toBe(true);
+  expect(isValidWhitelist('this test*', '*test')).toBe(true);
+  expect(isValidWhitelist('this test this*', '*test')).toBe(true);
+  expect(isValidWhitelist('*test this', '*test')).toBe(true);
+  expect(isValidWhitelist('*this test', '*test')).toBe(true);
+  expect(isValidWhitelist('*this test this', '*test')).toBe(true);
+  expect(isValidWhitelist('*test this*', '*test')).toBe(true);
+  expect(isValidWhitelist('*this test*', '*test')).toBe(true);
+  expect(isValidWhitelist('*this test this*', '*test')).toBe(true);
+  
+  expect(isValidWhitelist('text*', '*test')).toBe(false);
+  expect(isValidWhitelist('*text', '*test')).toBe(false);
+  expect(isValidWhitelist('*text*', '*test')).toBe(false);
+
   expect(isValidWhitelist('', '*test*')).toBe(false);
   expect(isValidWhitelist('test', '*test*')).toBe(true);
   expect(isValidWhitelist('attest', '*test*')).toBe(true);
@@ -1133,4 +1318,50 @@ test('isValidWhitelist', () => {
   expect(isValidWhitelist('this test', '*test*')).toBe(true);
   expect(isValidWhitelist('this test this', '*test*')).toBe(true);
   expect(isValidWhitelist('text', '*test*')).toBe(false);
+
+  // circumventions when not checking for circumventions:
+  expect(isValidWhitelist('te\'st', '*test*', { checkCircumventions: false })).toBe(false);
+  expect(isValidWhitelist('t-e-s-t', '*test*', { checkCircumventions: false })).toBe(false);
+  expect(isValidWhitelist('te~s^t', '*test*', { checkCircumventions: false })).toBe(false);
+  expect(isValidWhitelist('t e s t', '*test*', { checkCircumventions: false })).toBe(false);
+  expect(isValidWhitelist('t e s t s', '*test*', { checkCircumventions: false })).toBe(false);
+  expect(isValidWhitelist('a t e s t', '*test*', { checkCircumventions: false })).toBe(false);
+  expect(isValidWhitelist('a t e s t s', '*test*', { checkCircumventions: false })).toBe(false);
+
+  // circumventions when checking for circumventions
+  expect(isValidWhitelist('te\'st', '*test*')).toBe(true);
+  expect(isValidWhitelist('t-e-s-t', '*test*')).toBe(true);
+  expect(isValidWhitelist('te~s^t', '*test*')).toBe(true);
+  expect(isValidWhitelist('t e s t', '*test*')).toBe(true);
+  expect(isValidWhitelist('t e s t s', '*test*')).toBe(true);
+  expect(isValidWhitelist('a t e s t', '*test*')).toBe(true);
+  expect(isValidWhitelist('a t e s t s', '*test*')).toBe(true);
+
+  expect(isValidWhitelist('attes*', '*test*')).toBe(false);
+  expect(isValidWhitelist('attest*', '*test*')).toBe(true);
+  expect(isValidWhitelist('*attest', '*test*')).toBe(true);
+  expect(isValidWhitelist('*attes', '*test*')).toBe(false);
+  expect(isValidWhitelist('*attest*', '*test*')).toBe(true);
+  expect(isValidWhitelist('*attes*', '*test*')).toBe(false);
+
+  expect(isValidWhitelist('testing*', '*test*')).toBe(true);
+  expect(isValidWhitelist('esting*', '*test*')).toBe(false);
+  expect(isValidWhitelist('*testing', '*test*')).toBe(true);
+  expect(isValidWhitelist('*esting', '*test*')).toBe(false);
+  expect(isValidWhitelist('*testing*', '*test*')).toBe(true);
+  expect(isValidWhitelist('*esting*', '*test*')).toBe(false);
+
+  expect(isValidWhitelist('test this*', '*test*')).toBe(true);
+  expect(isValidWhitelist('this test*', '*test*')).toBe(true);
+  expect(isValidWhitelist('this test this*', '*test*')).toBe(true);
+  expect(isValidWhitelist('*test this', '*test*')).toBe(true);
+  expect(isValidWhitelist('*this test', '*test*')).toBe(true);
+  expect(isValidWhitelist('*this test this', '*test*')).toBe(true);
+  expect(isValidWhitelist('*test this*', '*test*')).toBe(true);
+  expect(isValidWhitelist('*this test*', '*test*')).toBe(true);
+  expect(isValidWhitelist('*this test this*', '*test*')).toBe(true);
+
+  expect(isValidWhitelist('text*', '*test*')).toBe(false);
+  expect(isValidWhitelist('*text', '*test*')).toBe(false);
+  expect(isValidWhitelist('*text*', '*test*')).toBe(false);
 });

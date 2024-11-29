@@ -5,6 +5,7 @@ import {
   getNormalRegExp,
   getRegExpComponents,
 } from './regex_handler';
+import { getWhitelistType } from './word_filter';
 
 /**
  * @param checkCircumventions - (Default: `true`)
@@ -92,6 +93,7 @@ export type WhitelistMap = { [badword: string]: WhitelistWordData[] };
 export type ProcessedWordLists = {
   badWordData: BadWordData[];
   whitelistMap: WhitelistMap;
+  filterOptions: WordFilterOptions;
 };
 
 /**
@@ -112,64 +114,91 @@ export type WordListOverrideData = {
 };
 
 /**
- * Figure out if the good word matches the bad word in its normal form
- * or if it represents a variant that reduces to the bad word (by removing special characters)
- * or if it represents a circumvention that spaces out the bad word.
- *
- * @param goodword - the whitelist term
- * @param badwordRegexp - the regular expression used to test for the bad word's presence in a string
- * @param checkCircumventions - whether we check circumventions at all
- * @param circumventionRegexp - the circumvention regexp used to test for presence of circumventions of
- * the bad word in a string, may be `undefined` if we don't check for circumventions
- * @returns `WhitelistWordType.None` if the whitelist term does not match this bad word,
- * `WhitelistWordType.Normal` if the term matches the bad word in its normal form,
- * `WhitelistWordType.Reduced` if the term without special characters (reduced string) matches the word,
- * `WhitelistWordType.Circumvention` if the whitelisted word matches the bad word's circumvention regexp,
- * `WhitelistWordType.ReducedAndCircumvention` if it matches both the reduced string and the circumvention.
+ * Creates the regular expressions used for testing for the presence of a bad word in a string.
+ * @param badword - The bad word to create regular expressions for.
+ * @param checkCircumventions - (Default: `true`)
+ * if false, the bad word matched exactly. If true, the bad word is additionally
+ * matched with any special characters in between, such as `ki%tt-y`, as well as
+ * with all characters spaced out, such as `k i t t y`. It makes sense to set this
+ * value to `false` when matching URLs/links or in-text-emojis such as `¯\_(ツ)_/¯`
+ * @param considerPrecedingApostrophes - (Default: `true`)
+ * if true, and in the case of spaced out words without a wildcard at the start,
+ * it will NOT allow phrases such as "i'd b a d w o r d" or "it's b a d w o r d"
+ * or "n'o't'a'b'a'd'w'o'r'd" (the latter may be considered okay by some.)
+ * If considerPrecedingApostrophes = false, all of the above are allowed.
+ * Consider setting this value based on the language you're targeting, but for
+ * English it might be reasonable to set it to "true".
+ * @param considerFollowUpApostrophes - (Default: `true`)
+ * if true, and in the case of spaced out words without a wildcard at the end,
+ * it will NOT allow phrases such as "b a d w o r d's" or "b a d w o r d'i n g" or
+ * "b'a'd'w'o'r'd'i'n'g" (where "badword" is the blocked term)
+ * If considerFollowUpApostrophes = false, all of the above are allowed.
+ * (Note: In either case, formats such as "b a d w o r d'ing" and "b a d w o r d'ed" get blocked)
+ * Consider setting this value based on the language you're targeting, but for
+ * English it might be reasonable to set it to "true".
+ * Note: The apostrophe circumventions are very rarely used, so this is an
+ * edge case, especially because cases where the word is not s p a c e d out are
+ * handled differently.
+ * @returns an object containing the bad word and the regular expressions associated with it.
  */
-const getWhitelistType = (
-  goodword: string,
-  badwordRegexp: RegExp,
-  checkCircumventions: boolean,
-  circumventionRegexp?: RegExp,
-) => {
-  // Figure out if the good word matches the bad word in its normal form
-  // or if it represents a variant that reduces to the bad word (by removing special characters)
-  // or if it represents a circumvention that spaces out the bad word.
-  let whitelistType = WhitelistWordType.None;
-  if (goodword.match(badwordRegexp)) {
-    whitelistType = WhitelistWordType.Normal;
-  } else if (checkCircumventions) {
-    const reducedGoodwordData = reduceInputString(goodword);
-    if (reducedGoodwordData.reducedInput.match(badwordRegexp)) {
-      whitelistType = WhitelistWordType.Reduced;
-    }
-    if (goodword.match(circumventionRegexp)) {
-      whitelistType =
-        whitelistType === WhitelistWordType.Reduced
-          ? WhitelistWordType.ReducedAndCircumvention
-          : WhitelistWordType.Circumvention;
-    }
-  }
-  return whitelistType;
-};
+export const getBadWordData = (
+  badword: string,
+  {
+    checkCircumventions = true,
+    considerPrecedingApostrophes = true,
+    considerFollowUpApostrophes = true,
+  }: WordFilterOptions = {},
+): BadWordData => {
+  const badWordComponents = getRegExpComponents(badword);
+  const badwordRegexp = getNormalRegExp(badWordComponents);
+  const circumventionRegexp = checkCircumventions ? getCircumventionRegExp(badWordComponents) : undefined;
+
+  return {
+    word: badword,
+    normalRegexp: badwordRegexp,
+    strictRegexp: circumventionRegexp,
+    whitelistedStrictRegexpArray: checkCircumventions
+      ? [
+          getCircumventionWhitelistRegExp(badWordComponents, true, considerPrecedingApostrophes),
+          getCircumventionWhitelistRegExp(badWordComponents, false, considerFollowUpApostrophes),
+        ].filter((item) => item !== undefined)
+      : [],
+  };
+}
 
 /**
  * Tests if a word is a valid whitelist for a given bad word.
  * @param goodword - The word to check whether it whitelists the bad word.
  * @param badword - The bad word to check.
- * @param checkCircumventions - Whether the whitelisted word is allowed to be a circumvention of the
+ * @param checkCircumventions - (Default: `true`)
+ * **Highly recommended to use the same word filter options as for the word list you're building!**
+ * Whether the whitelisted word is allowed to be a circumvention of the
  * bad word. If false, only direct matches count.
+ * @param considerPrecedingApostrophes - (Default: `true`)
+ * **Highly recommended to use the same word filter options as for the word list you're building!**
+ * Whether your bad word's circumventions consider phrases such as "i'd b a d w o r d" or
+ * "it's b a d w o r d" or "n'o't'a'b'a'd'w'o'r'd" as bad (it does if this param is `true`).
+ * This determines whether such a term counts as a valid whitelist or not.
+ * @param considerFollowUpApostrophes - (Default: `true`)
+ * **Highly recommended to use the same word filter options as for the word list you're building!**
+ * Whether your bad word's circumventions consider phrases such as "b a d w o r d's" or
+ * "b a d w o r d'i n g" or "b'a'd'w'o'r'd'i'n'g" as bad (it does if this param is `true`).
+ * This determines whether such a term counts as a valid whitelist or not.
  * @returns True if goodword whitelists badword. False if it does not.
  *
  * _(Returns `true` if badword is empty string `''`)_
  */
-export const isValidWhitelist = (goodword: string, badword: string, checkCircumventions?: boolean): boolean => {
-  const badWordComponents = getRegExpComponents(badword);
-  const badwordRegexp = getNormalRegExp(badWordComponents);
-  const circumventionRegexp = checkCircumventions ? getCircumventionRegExp(badWordComponents) : undefined;
-
-  return getWhitelistType(goodword, badwordRegexp, checkCircumventions, circumventionRegexp) !== WhitelistWordType.None;
+export const isValidWhitelist = (
+  goodword: string,
+  badword: string, 
+  {
+    checkCircumventions = true,
+    considerPrecedingApostrophes = true,
+    considerFollowUpApostrophes = true,
+  }: WordFilterOptions = {},
+): boolean => {
+  const badWordData = getBadWordData(badword, { checkCircumventions, considerPrecedingApostrophes, considerFollowUpApostrophes });
+  return getWhitelistType(goodword, badWordData) !== WhitelistWordType.None;
 };
 
 /**
@@ -247,32 +276,24 @@ export const preprocessWordLists = (
 ): ProcessedWordLists => {
   const badWordData: BadWordData[] = [];
   const whitelistMap: WhitelistMap = {}; // map from badword -> [goodwords] (array of good word data)
+  const filterOptions: WordFilterOptions = {
+    checkCircumventions,
+    considerPrecedingApostrophes,
+    considerFollowUpApostrophes,
+  }
   for (const badword of badwords) {
     if (badword === '') {
       continue;
     }
-    const badWordComponents = getRegExpComponents(badword);
-    const badwordRegexp = getNormalRegExp(badWordComponents);
-    const circumventionRegexp = checkCircumventions ? getCircumventionRegExp(badWordComponents) : undefined;
-
-    badWordData.push({
-      word: badword,
-      normalRegexp: badwordRegexp,
-      strictRegexp: circumventionRegexp,
-      whitelistedStrictRegexpArray: checkCircumventions
-        ? [
-            getCircumventionWhitelistRegExp(badWordComponents, true, considerPrecedingApostrophes),
-            getCircumventionWhitelistRegExp(badWordComponents, false, considerFollowUpApostrophes),
-          ].filter((item) => item !== undefined)
-        : [],
-    });
+    const currentBadWordData = getBadWordData(badword, filterOptions);
+    badWordData.push(currentBadWordData);
 
     for (const goodword of whitelist) {
       if (goodword === '') {
         continue;
       }
 
-      const whitelistType = getWhitelistType(goodword, badwordRegexp, checkCircumventions, circumventionRegexp);
+      const whitelistType = getWhitelistType(goodword, currentBadWordData);
 
       if (whitelistType !== WhitelistWordType.None) {
         const goodwordComponents = getRegExpComponents(goodword);
@@ -293,6 +314,7 @@ export const preprocessWordLists = (
   return {
     badWordData,
     whitelistMap,
+    filterOptions,
   };
 };
 
@@ -358,10 +380,8 @@ export const preprocessWordListOverrideData = (
       if (goodword === '') {
         continue;
       }
-      const badwordRegexp = defaultBadWordData.normalRegexp;
-      const circumventionRegexp = defaultBadWordData.strictRegexp;
-      const checkCircumventions = circumventionRegexp !== undefined;
-      const whitelistType = getWhitelistType(goodword, badwordRegexp, checkCircumventions, circumventionRegexp);
+      const badwordData = getBadWordData(badword, defaultWordList.filterOptions);
+      const whitelistType = getWhitelistType(goodword, badwordData);
       if (
         whitelistType !== WhitelistWordType.None && // make sure the word matches the bad word
         (!defaultWordList.whitelistMap[badword] || // make sure the whitelisted word is not already there
