@@ -31,9 +31,9 @@ import {
 	unEmoji, // removes text-alike emojis in a string and replaces them with latin characters
 	removeTextAccents, // removes accents from characters in a string
 	textToLatin, // puts text to lowercase, replaces unicode characters that look like
-				 // letters with latin letters, and removes text-like emojis and accents
+		// letters with latin letters, and removes text-like emojis and accents
 	reduceRepeatCharacters, // reduces repeat characters to an amount specified
-							// (e.g. with amount=2, "ttttteessst" => "tteesst")
+				// (e.g. with amount=2, "ttttteessst" => "tteesst")
 	
 	// WordList Preprocessing
 	preprocessWordLists, // needed to set up bad word list and whitelist
