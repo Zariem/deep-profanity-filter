@@ -163,7 +163,7 @@ export const getBadWordData = (
         ].filter((item) => item !== undefined)
       : [],
   };
-}
+};
 
 /**
  * Tests if a word is a valid whitelist for a given bad word.
@@ -189,14 +189,18 @@ export const getBadWordData = (
  */
 export const isValidWhitelist = (
   goodword: string,
-  badword: string, 
+  badword: string,
   {
     checkCircumventions = true,
     considerPrecedingApostrophes = true,
     considerFollowUpApostrophes = true,
   }: WordFilterOptions = {},
 ): boolean => {
-  const badWordData = getBadWordData(badword, { checkCircumventions, considerPrecedingApostrophes, considerFollowUpApostrophes });
+  const badWordData = getBadWordData(badword, {
+    checkCircumventions,
+    considerPrecedingApostrophes,
+    considerFollowUpApostrophes,
+  });
   return getWhitelistType(goodword, badWordData) !== WhitelistWordType.None;
 };
 
@@ -279,7 +283,7 @@ export const preprocessWordLists = (
     checkCircumventions,
     considerPrecedingApostrophes,
     considerFollowUpApostrophes,
-  }
+  };
   for (const badword of badwords) {
     if (badword === '') {
       continue;

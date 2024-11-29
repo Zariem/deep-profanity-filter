@@ -313,10 +313,7 @@ const findBadWordMatchData = (
  * `WhitelistWordType.Circumvention` if the whitelisted word matches the bad word's circumvention regexp,
  * `WhitelistWordType.ReducedAndCircumvention` if it matches both the reduced string and the circumvention.
  */
-export const getWhitelistType = (
-  goodword: string,
-  badwordData: BadWordData,
-) => {
+export const getWhitelistType = (goodword: string, badwordData: BadWordData) => {
   // Figure out if the good word matches the bad word in its normal form
   // or if it represents a variant that reduces to the bad word (by removing special characters)
   // or if it represents a circumvention that spaces out the bad word.
@@ -329,7 +326,7 @@ export const getWhitelistType = (
       whitelistType = WhitelistWordType.Reduced;
     }
     // using findBadWordMatchData as the integrated circumvention whitelist regexps need to be checked
-    // for edge cases such as s h e l l (fully spaced out words that contain a bad word, parsed "shell") 
+    // for edge cases such as s h e l l (fully spaced out words that contain a bad word, parsed "shell")
     const circumventionMatches = findBadWordMatchData(goodword, badwordData, {}, true);
     if (circumventionMatches.length > 0) {
       whitelistType =

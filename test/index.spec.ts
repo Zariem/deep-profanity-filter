@@ -1141,7 +1141,7 @@ test('isValidWhitelist', () => {
   expect(isValidWhitelist('text', 'test')).toBe(false);
 
   // circumventions when not checking for circumventions:
-  expect(isValidWhitelist('te\'st', 'test', { checkCircumventions: false })).toBe(false);
+  expect(isValidWhitelist("te'st", 'test', { checkCircumventions: false })).toBe(false);
   expect(isValidWhitelist('t-e-s-t', 'test', { checkCircumventions: false })).toBe(false);
   expect(isValidWhitelist('te~s^t', 'test', { checkCircumventions: false })).toBe(false);
   expect(isValidWhitelist('t e s t', 'test', { checkCircumventions: false })).toBe(false);
@@ -1150,12 +1150,12 @@ test('isValidWhitelist', () => {
   expect(isValidWhitelist('a t e s t s', 'test', { checkCircumventions: false })).toBe(false);
 
   // circumventions when checking for circumventions
-  expect(isValidWhitelist('te\'st', 'test')).toBe(true);
+  expect(isValidWhitelist("te'st", 'test')).toBe(true);
   expect(isValidWhitelist('t-e-s-t', 'test')).toBe(true);
   expect(isValidWhitelist('te~s^t', 'test')).toBe(true);
   expect(isValidWhitelist('t e s t', 'test')).toBe(true);
   expect(isValidWhitelist('t e s t s a', 'test')).toBe(false);
-  expect(isValidWhitelist('k i t t y a', 'test',)).toBe(false);
+  expect(isValidWhitelist('k i t t y a', 'test')).toBe(false);
   expect(isValidWhitelist('a t e s t', 'test')).toBe(false);
   expect(isValidWhitelist('a t e s t s', 'test')).toBe(false);
 
@@ -1206,9 +1206,9 @@ test('isValidWhitelist', () => {
   expect(isValidWhitelist('this test', 'test*')).toBe(true);
   expect(isValidWhitelist('this test this', 'test*')).toBe(true);
   expect(isValidWhitelist('text', 'test*')).toBe(false);
-  
+
   // circumventions when not checking for circumventions:
-  expect(isValidWhitelist('te\'st', 'test*', { checkCircumventions: false })).toBe(false);
+  expect(isValidWhitelist("te'st", 'test*', { checkCircumventions: false })).toBe(false);
   expect(isValidWhitelist('t-e-s-t', 'test*', { checkCircumventions: false })).toBe(false);
   expect(isValidWhitelist('te~s^t', 'test*', { checkCircumventions: false })).toBe(false);
   expect(isValidWhitelist('t e s t', 'test*', { checkCircumventions: false })).toBe(false);
@@ -1217,7 +1217,7 @@ test('isValidWhitelist', () => {
   expect(isValidWhitelist('a t e s t s', 'test*', { checkCircumventions: false })).toBe(false);
 
   // circumventions when checking for circumventions
-  expect(isValidWhitelist('te\'st', 'test*')).toBe(true);
+  expect(isValidWhitelist("te'st", 'test*')).toBe(true);
   expect(isValidWhitelist('t-e-s-t', 'test*')).toBe(true);
   expect(isValidWhitelist('te~s^t', 'test*')).toBe(true);
   expect(isValidWhitelist('t e s t', 'test*')).toBe(true);
@@ -1248,7 +1248,7 @@ test('isValidWhitelist', () => {
   expect(isValidWhitelist('*test this*', 'test*')).toBe(true);
   expect(isValidWhitelist('*this test*', 'test*')).toBe(true);
   expect(isValidWhitelist('*this test this*', 'test*')).toBe(true);
-  
+
   expect(isValidWhitelist('text*', 'test*')).toBe(false);
   expect(isValidWhitelist('*text', 'test*')).toBe(false);
   expect(isValidWhitelist('*text*', 'test*')).toBe(false);
@@ -1264,7 +1264,7 @@ test('isValidWhitelist', () => {
   expect(isValidWhitelist('text', '*test')).toBe(false);
 
   // circumventions when not checking for circumventions:
-  expect(isValidWhitelist('te\'st', '*test', { checkCircumventions: false })).toBe(false);
+  expect(isValidWhitelist("te'st", '*test', { checkCircumventions: false })).toBe(false);
   expect(isValidWhitelist('t-e-s-t', '*test', { checkCircumventions: false })).toBe(false);
   expect(isValidWhitelist('te~s^t', '*test', { checkCircumventions: false })).toBe(false);
   expect(isValidWhitelist('t e s t', '*test', { checkCircumventions: false })).toBe(false);
@@ -1273,7 +1273,7 @@ test('isValidWhitelist', () => {
   expect(isValidWhitelist('a t e s t s', '*test', { checkCircumventions: false })).toBe(false);
 
   // circumventions when checking for circumventions
-  expect(isValidWhitelist('te\'st', '*test')).toBe(true);
+  expect(isValidWhitelist("te'st", '*test')).toBe(true);
   expect(isValidWhitelist('t-e-s-t', '*test')).toBe(true);
   expect(isValidWhitelist('te~s^t', '*test')).toBe(true);
   expect(isValidWhitelist('t e s t', '*test')).toBe(true);
@@ -1304,7 +1304,7 @@ test('isValidWhitelist', () => {
   expect(isValidWhitelist('*test this*', '*test')).toBe(true);
   expect(isValidWhitelist('*this test*', '*test')).toBe(true);
   expect(isValidWhitelist('*this test this*', '*test')).toBe(true);
-  
+
   expect(isValidWhitelist('text*', '*test')).toBe(false);
   expect(isValidWhitelist('*text', '*test')).toBe(false);
   expect(isValidWhitelist('*text*', '*test')).toBe(false);
@@ -1320,7 +1320,7 @@ test('isValidWhitelist', () => {
   expect(isValidWhitelist('text', '*test*')).toBe(false);
 
   // circumventions when not checking for circumventions:
-  expect(isValidWhitelist('te\'st', '*test*', { checkCircumventions: false })).toBe(false);
+  expect(isValidWhitelist("te'st", '*test*', { checkCircumventions: false })).toBe(false);
   expect(isValidWhitelist('t-e-s-t', '*test*', { checkCircumventions: false })).toBe(false);
   expect(isValidWhitelist('te~s^t', '*test*', { checkCircumventions: false })).toBe(false);
   expect(isValidWhitelist('t e s t', '*test*', { checkCircumventions: false })).toBe(false);
@@ -1329,7 +1329,7 @@ test('isValidWhitelist', () => {
   expect(isValidWhitelist('a t e s t s', '*test*', { checkCircumventions: false })).toBe(false);
 
   // circumventions when checking for circumventions
-  expect(isValidWhitelist('te\'st', '*test*')).toBe(true);
+  expect(isValidWhitelist("te'st", '*test*')).toBe(true);
   expect(isValidWhitelist('t-e-s-t', '*test*')).toBe(true);
   expect(isValidWhitelist('te~s^t', '*test*')).toBe(true);
   expect(isValidWhitelist('t e s t', '*test*')).toBe(true);
