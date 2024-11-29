@@ -1,4 +1,3 @@
-import { reduceInputString } from './reduce_input_string';
 import {
   getCircumventionRegExp,
   getCircumventionWhitelistRegExp,
