@@ -14,11 +14,12 @@ This package can be divided into three parts:
 1. **Setting Up a List of Words**
 How to provide words or phrases, and what gets detected as a bad word given your list of words.
 How to provide whitelisted terms to allow certain words or phrases as exceptions.
-How to do on the fly changes to your list.
+How to do changes to your list.
+How to check if an allowed/whitelisted term is actually effective and covering a bad word.
 2. **Detecting Words from the List**
 How to use the tool to detect bad content, given your bad word list and whitelist.
 3. **Input Preprocessing**
-How to use the tool to translate letter emojis or fancy 𝓤𝓷𝓲𝓬𝓸𝓭𝓮 𝔸𝕝𝕡𝕙𝕒𝕓𝕖𝕥𝕤 to latin letters.
+How to use the tool to translate letter emojis or fancy 𝓤𝓷𝓲𝓬𝓸𝓭𝓮 𝔸𝕝𝕡𝕙𝕒𝕓𝕖𝕥𝕤 to latin letters or reduce repeeeeaattt characters from your input.
 
 In the following section there will first be an explanation on how to do these things in JavaScript or TypeScript code, followed by some in-depth examples of what words and circumventions may get detected as bad words with some given input words.
 
@@ -31,9 +32,16 @@ import {
 	removeTextAccents, // removes accents from characters in a string
 	textToLatin, // puts text to lowercase, replaces unicode characters that look like
 				 // letters with latin letters, and removes text-like emojis and accents
+	reduceRepeatCharacters, // reduces repeat characters to an amount specified
+							// (e.g. with amount=2, "ttttteessst" => "tteesst")
 	
 	// WordList Preprocessing
 	preprocessWordLists, // needed to set up bad word list and whitelist
+	isValidWhitelist, // check if a specific word whitelists a given bad word
+	
+	// Wordlist Overrides - used to piggyback bad words and allowed terms
+	// onto existing lists on the fly
+	preprocessWordListOverrideData, // set up specific override data
 	
 	// Bad Word Detection
 	doesContainBadWords, // boolean true/false check on an input string
@@ -99,7 +107,31 @@ badwords.push("newbadword");
 whitelist.push("newbadword but good");
 wordFilter = preprocessWordLists(badwords, whitelist /*{ WordFilterOptions }*/);
 ```
+#### Override Data
+In some cases, you might need to apply different changes to the same word list, for example if you have a **default list** that multiple people can customise individually, yet you don't wish to store your default data multiple times. In that case, override lists might come of use. In pretty much any other case, they are not necessary.
+```js
+import { preprocessWordLists, preprocessWordListOverrideData } from 'deep-profanity-filter'
+let badwords = ['kitty', 'hell*', '*word*', 'ban ananas'] // example
+let whitelist = ['hello kitty', 'hello*', 'ban ananas juice', 'keyword', 'loanword*', '*sword*', '*wording'];
+let wordFilter = preprocessWordLists(badwords, whitelist);
 
+const disabledDefaultWords = ['ban ananas']; // "remove" this word from the badwords list
+const disabledDefaultWhitelist = ['ban ananas juice', 'keyword']; // "remove" these from the whitelist
+const additionalWhitelistWords = ['kitty cat'];
+let overrideData = preprocessWordListOverrideData(
+	wordFilter, // the word list to which you want to piggy-back information
+	disabledDefaultWords,
+	disabledDefaultWhitelist,
+	additionalWhitelistWords,
+);
+```
+```js
+// Using this override list with any functions to detect bad words is equivalent to
+// not using any override list and instead just creating a word list with those terms modified:
+let badwords2 = ['kitty', 'hell*', '*word*']; // removed "ban ananas"
+let whitelist2 = ['hello kitty', 'hello*', 'loanword*', '*sword*', '*wording', 'kitty cat'];
+let wordFilter2 = preprocessWordLists(badwords2, whitelist2);
+```
 ### Detecting If There Is a Bad Word
 ```js
 import { doesContainBadWords } from 'deep-profanity-filter';
@@ -112,6 +144,16 @@ if (doesContainBadWords(inputString, wordFilter)) {
 }
 // Output:
 // Found a bad word!
+```
+```js
+// Optionally, with override data:
+if (doesContainBadWords(inputString, wordFilter, overrideData)) {
+	console.log('Found a bad word!');
+} else {
+	console.log('No bad word found.');
+}
+// Output:
+// No bad word found.
 ```
 ### Finding a Bad Word in an Input
 ```js
@@ -126,18 +168,40 @@ if (badWord) {
 // Output:
 // Found a bad word:  kitty
 ```
+```js
+// Optionally, with override data:
+const badWord2 = findAnyBadWord('test input string about a kitty', wordFilter, overrideData);
+if (badWord) {
+	console.log('Found a bad word: ', badWord);
+} else {
+	console.log('No bad word found.'); // Or all bad words whitelisted.
+}
+// Output:
+// Found a bad word:  kitty
+```
 ### Finding All Bad Words in an Input
 ```js
 import { findAllBadWords } from 'deep-profanity-filter';
 
-const badWords = findAllBadWords('hell kitty is my fav word!!!', wordFilter);
-if (badWord.length > 0) {
+const badWords = findAllBadWords('hell kitty cat is my fav word!!!', wordFilter);
+if (badWords.length > 0) {
 	console.log('Found bad words: ', badWords);
 } else {
 	console.log('No bad words were found.'); // Or all bad words whitelisted.
 }
 // Output:
 // Found bad words:  [ 'kitty', 'hell*', '*word*' ]
+```
+```js
+// Optionally, with override data:
+const badWords2 = findAllBadWords('hell kitty cat is my fav word!!!', wordFilter, overrideData);
+if (badWords2.length > 0) {
+	console.log('Found bad words: ', badWords);
+} else {
+	console.log('No bad words were found.'); // Or all bad words whitelisted.
+}
+// Output:
+// Found bad words:  [ 'hell*', '*word*' ] // "kitty cat" was whitelisted
 ```
 ### Replacing all Bad Words in an Input
 If you wish to replace all bad words in a text in order to "sanitise" it, but you have no need for a list of all bad words, you can use `censorText`:
@@ -151,6 +215,11 @@ console.log(censorText('cute kitty cat', wordFilter)); // cute #&?£& cat
 console.log(censorText('oh he.l-l, what a kit~ty! my w o r d!?!', wordFilter));
 // oh %£.?-£, what a #&?~£&! my ! % $ ?!?!
 ```
+```js
+// Optionally, with override data:
+console.log(censorText('oh hell, what a kitty cat! my word!', {}, overrideData));
+// oh %£?£, what a kitty cat! my !%$?!
+```
 If you wish to **at the same time query a list of all bad words**, use `findBadWordLocations` along with `replaceBadWords` and `getBadWords` instead to ensure better runtime efficiency:
 ```js
 import { findBadWordLocations, getBadWords, replaceBadWords } from 'deep-profanity-filter';
@@ -159,6 +228,7 @@ let inputStrings = ['cute kitty cat',
 	'oh he.l-l, what a kit~ty! my w o r d!?!'];
 for (const str of inputStrings) {
 	let locations = findBadWordLocations(str, wordFilter);
+	// with override data: locations = findBadWordLocations(str, wordFilter, { overrideData });
 	console.log('Testing input string: "' + str + '"');
 	console.log('Bad words found:', getBadWords(locations)); // [ 'kitty' ];
 	console.log('Output: "' + replaceBadWords(str, locations) + '"'); // cute #&?£& cat
@@ -227,6 +297,21 @@ console.log(censorText('𝒞𝓊𝓉𝑒 kitty cat', wordFilter, {
 const input = textToLatin('𝒞𝓊𝓉𝑒 𝒦𝒾𝓉𝓉𝓎 𝒞𝒶𝓉'); // cute kitty cat
 console.log(replaceBadWords(input, findBadWordLocations(input, wordFilter))); // cute #&?£& cat
 ```
+Additionally to all these preprocessing methods, there is also an integrated way to use the `reduceRepeatCharacters` function within the `censorText` function via the `reduceRepeatCharactersTo` field value.
+**This value needs to be an integer number larger than 0, otherwise an exception is thrown.**
+It is `undefined` per default, which means repeat characters in the input are not removed.
+```js
+console.log(censorText('cute kittttttttty cat', wordFilter, {
+	reduceRepeatCharactersTo: 2, // parses the input as "cute kitty cat"
+})); // cute #&?£& cat
+console.log(censorText('cute kittttttttty cat', wordFilter, {
+	reduceRepeatCharactersTo: 3, // parses the input as "cute kittty cat" -> does not find a bad word
+})); // cute kittttttttty cat
+console.log(censorText('cute kittttttttty cat', wordFilter, {
+	reduceRepeatCharactersTo: 1, // parses the input as "cute kity cat" -> does not find a bad word
+})); // cute kittttttttty cat
+```
+Do note that reducing repeat characters (fully explained below in the input preprocessing chapter) is a very powerful preprocessing method that can (and likely _will_) lead to false positives if used wrong. **Do make sure to familiarise yourself with the implications of this parameter in the Input Preprocessing section below, before using it.**
 #### Varying the Replacement Characters:
 If you don't want to replace your bad words with grawlix `%&$#?£@!` characters, you can also choose to replace the words with a single repeated character:
 ```js
@@ -259,6 +344,11 @@ console.log(censorText('cute kitty cat', wordFilter, {
 })); // cute k&?£y cat
 ```
 This again also works as an argument on `replaceBadWords`.
+#### With Override Data:
+```js
+// With any word list override data, the syntax is as follows:
+censorText(inputString, wordFilter, {/*options*/}, overrideData);
+```
 ### Input Preprocessing
 ```js
 import { unEmoji, removeTextAccents, textToLatin } from 'deep-profanity-filter';
@@ -299,10 +389,31 @@ console.log(textToLatin('ₜₕₑ qᵤᵢcₖ bᵣₒwₙ fₒₓ ⱼᵤₘₚ�
 Note: Input Preprocessing is a computationally expensive operation, due to the amount of unicode characters that the input is being compared against. Be aware that if you use this feature in large scales (to check many messages per second), it can slow down your program.
 
 *Runtime optimisations can be done in the code, but are not being done for the first version of this package, as pushing out a version that works is the first priority. They will be considered in future versions. (Feel free to contribute, if you want to.)*
+#### Reducing Repeat Characters
+This library provides a function to reduce the amount of times the same character repeats itself in any given input. The following examples explain its functionality best:
+```js
+import { reduceRepeatCharacters } from 'deep-profanity-filter';
+console.log(reduceRepeatCharacters('ttttteeeessstting', 1)); // testing
+console.log(reduceRepeatCharacters('ttttteeeessstting', 2)); // tteesstting
+console.log(reduceRepeatCharacters('ttttteeeessstting', 3)); // ttteeessstting
+console.log(reduceRepeatCharacters('ttttteeeessstting', 4)); // tttteeeessstting
+console.log(reduceRepeatCharacters('kittty', 4)); // kittty
+console.log(reduceRepeatCharacters('kittty', 3)); // kittty
+console.log(reduceRepeatCharacters('kittty', 2)); // kitty
+console.log(reduceRepeatCharacters('kittty', 1)); // kity
 
+// Note: the input number needs to be an integer larger than 0, else it throws an error!
+console.log(reduceRepeatCharacters('kittty', 0)); // !!! Throws Error
+console.log(reduceRepeatCharacters('kittty', -1)); // !!! Throws Error
+console.log(reduceRepeatCharacters('kittty', 1.5)); // !!! Throws Error
+console.log(reduceRepeatCharacters('kittty', 4/3)); // !!! Throws Error
+```
+**Note:** If you set your value to `1`, this will likely cause false positives, as a lot of words such as `loot -> lot` would get misinterpreted. For most languages, setting the value to `2` or `3` is best. (Also, when using this approach in conjunction with wildcards in your bad words, you may end up finding lots of unexpected false positives.)
+
+**Note:** If you use this to preprocess every input string before testing for bad words, your bad word list (and corresponding list of allowed words) should not feature more than the amount of repeating characters specified or they will be ineffective. That is, if you use the value `2` across the board, putting `princessship` on the bad word list will have no effect since any input string with this word would see this word reduced to `princesship`.
 ### Message Censoring Example
 ```js
-import {doesContainBadWords, preprocessWordLists, textToLatin } from 'deep-profanity-filter';
+import { doesContainBadWords, preprocessWordLists, textToLatin } from 'deep-profanity-filter';
 
 const badwords = ['*word']
 const whitelist = ['badword']
@@ -371,7 +482,7 @@ This is done similarly to the previous chapter.
 If you check for a word with a wildcard character `*` at either end, it will look for any word containing your search term. In the case of `*word*`, the following would be recognised as bad words:
 - `word`, `sword`, `wording`, `passwords`, etc.
 
-**__Note that searching for words like this can lead to many false positives, so be sure to only use this method to search for the worst offenders, and avoid using it with short words of 4 or less characters!__** *(Short words of 4 or less characters can randomly appear in links or keyboard-smashes.)*
+**__Note that searching for words like this can lead to many false positives, so be sure to only use this method to search for the worst offenders, especially when used with short words of 4 or less characters!__** *(Short words of 4 or less characters can randomly appear in links or keyboard-smashes.)*
 
 ### Whitelisting Substrings
 For whitelisting, in any case, it is important to include the whole search term in it. You can, but don't have to add wildcards to the whitelist's start and end.
@@ -381,7 +492,72 @@ For whitelisting, in any case, it is important to include the whole search term 
 - If we whitelist another substring, such as `*sword*`, it'll cover all cases and allow words like `sword`, `miswording`, `longsword`, `swordfight`, etc.
 
 It can be tricky to find all the right terms to whitelist, so use wildcards with care.
+## Checking Whitelisted Strings for Validity
+In order to check whether a whitelisted string is valid and whitelists a term, a helper function `isValidWhitelist` can be used. This may prove useful in at least two cases:
+- If you allow other users to build a word list, you can use this function to give them feedback on whether their whitelisted terms are carrying any effect.
+- If you wish to test whether a certain bad word covers a bad word or phrase, `isValidWhitelist`  does that check for you. If a phrase would be a valid whitelist for a term, it means that it's considered a bad word/phrase if you do not whitelist it.
 
+**Note: Terms whitelist a bad word if they cover the bad word itself, or if they cover a subset of the words covered by a bad word.** This means if your bad word is `hell*` and you whitelist `he*`, this would theoretically make the bad word `hell*` useless as a bad word. Therefore this term will be considered a __user error__ and the tool does not consider it as valid.
+See the following example code to get a clearer understanding of it:
+```js
+import { isValidWhitelist } from 'deep-profanity-filter';
+
+console.log(isValidWhitelist('hell', 'hell*')); // true
+console.log(isValidWhitelist('hello', 'hell*')); // true
+console.log(isValidWhitelist('hello*', 'hell*')); // true
+console.log(isValidWhitelist('hellman', 'hell*')); // true
+console.log(isValidWhitelist('hello kitty', 'kitty')); // true
+console.log(isValidWhitelist('kitty cat', 'kitty')); // true
+
+// The function only compares one bad word with one good word.
+console.log(isValidWhitelist('goodword', 'badword')); // false - no overlap
+console.log(isValidWhitelist('hell', 'kitty')); // false - no overlap
+console.log(isValidWhitelist('kitty', 'hell*')); // false - no overlap
+
+// The function is intended to provide clarity on which whitelisted terms are
+// reasonable and valid. Whitelisting terms that would not have been considered bad
+// with the given bad word will return "false" by this function.
+console.log(isValidWhitelist('hello', 'hell')); // false
+console.log(isValidWhitelist('shell', 'hell*')); // false
+console.log(isValidWhitelist('kittycat', 'kitty*')); // true
+console.log(isValidWhitelist('kittycat', 'kitty')); // false
+console.log(isValidWhitelist('hellokitty', 'kitty*')); // false
+
+// Whitelist terms that fully negate a bad word will be considered "false",
+// since in that case, it makes more sense to remove the bad word itself.
+// This is considered a user error and likely happens unintentionally.
+console.log(isValidWhitelist('loanword*', 'loanwords')); // false
+console.log(isValidWhitelist('h*', 'hell*')); // false
+console.log(isValidWhitelist('he*', 'hell*')); // false
+console.log(isValidWhitelist('hel*', 'hell*')); // false
+
+// The only exception to this is whitelisting the exact bad word itself, both since
+// it is mathematically part of the subset and because this case is likely intentional
+console.log(isValidWhitelist('hell*', 'hell*')); // true
+console.log(isValidWhitelist('badword', 'badword')); true
+```
+### Checking circumvention whitelists:
+When creating your word list with `preprocessWordLists`, three parameters can be passed to tweak whether and how to handle circumventions: `checkCircumventions`, `considerPrecedingApostrophes` and `considerFollowUpApostrophes`.
+The same three parameters can be passed into this function. As for apostrophe handling, the effects of these parameters being `true` or `false` is explained in detail in the next section. It applies both to wordlists as well as whitelist checks.
+**Note: the recommendation is to use the same values for testing your whitelist as you use for creating your word list, to get accurate results.**
+```js
+// To check with or without circumventions, you can set the checkCircumventions flag to true or false
+console.log(isValidWhitelist('he^ll', 'hell', { checkCircumventions: false })); // false
+console.log(isValidWhitelist('he^ll', 'hell', { checkCircumventions: true })); // true
+console.log(isValidWhitelist('h e l l', 'hell', { checkCircumventions: true })); // true
+console.log(isValidWhitelist('h-e-l-l', 'hell', { checkCircumventions: true })); // true
+console.log(isValidWhitelist('h^e.l l', 'hell', { checkCircumventions: true })); // true
+console.log(isValidWhitelist('s h e l l', 'hell', { checkCircumventions: true })); // false (parsed as "shell")
+console.log(isValidWhitelist('h e l l o', 'hell', { checkCircumventions: true })); // false (parsed as "hello")
+
+// All three flags are per default set to true, so if you are checking for circumventions,
+// you can omit the additional flags. If you specifically wish to NOT check circumventions, you'll need it.
+console.log(isValidWhitelist('he^ll', 'hell')); // true
+console.log(isValidWhitelist('h e l l', 'hell')); // true
+console.log(isValidWhitelist('h-e-l-l', 'hell')); // true
+console.log(isValidWhitelist('h^e.l l', 'hell')); // true
+```
+**__Note: All whitelist terms that return false here will have no whitelisting effect on that specific bad word when using this library, as this function is also used internally to create the mapping of whitelisted terms to bad words.__**
 ## Apostrophe Handling
 When setting up the word lists, there are two optional settings on how to handle apostrophes in `s p a c e d` out words.
 *Please note that these are very rare use cases, as it is not usually normal for people to write everything with spaces or special characters between each letter, but it **can** happen, especially when people are trying to circumvent your filter. As it is such a rare case, you have to decide for yourself whether you want to be a bit more careful and risk accidenally treating a good word as bad, if it is spelled unfortunately with apostrophes, or whether you want to be more lax in these cases.*
