@@ -166,6 +166,36 @@ export const getBadWordData = (
 };
 
 /**
+ * Creates the regular expressions and informations used for testing for the presence of an allowed term in a string, in relation to
+ * a bad word. Is used to build the ProcessedWordLists data.)
+ * @param whitelistWord - the allowed word or phrase to create regular expressions for
+ * @param badwordData - the regular expressions to check for a specific bad word in a string, created with `getBadWordData(...)`
+ * @returns - undefined if the whitelisted word does not match the bad word
+ * - otherwise it returns the WhitelistWordData containing
+ * the whitelistWord, the regular expressions associated with it, and the WhitelistWordType of this allowed word with respect to the
+ * given bad word data.
+ */
+export const getWhitelistWordData = (
+  whitelistWord: string,
+  badwordData: BadWordData,
+): WhitelistWordData | undefined => {
+  if (whitelistWord === '') {
+    return undefined;
+  }
+  const whitelistType = getWhitelistType(whitelistWord, badwordData);
+  if (whitelistType === WhitelistWordType.None) {
+    return undefined;
+  }
+  const whitelistWordComponents = getRegExpComponents(whitelistWord);
+  return {
+    word: whitelistWord,
+    normalRegexp: getNormalRegExp(whitelistWordComponents),
+    strictRegexp: getCircumventionRegExp(whitelistWordComponents),
+    type: whitelistType,
+  };
+};
+
+/**
  * Tests if a word is a valid whitelist for a given bad word.
  * @param goodword - The word to check whether it whitelists the bad word.
  * @param badword - The bad word to check.
@@ -292,24 +322,12 @@ export const preprocessWordLists = (
     badWordData.push(currentBadWordData);
 
     for (const goodword of whitelist) {
-      if (goodword === '') {
-        continue;
-      }
-
-      const whitelistType = getWhitelistType(goodword, currentBadWordData);
-
-      if (whitelistType !== WhitelistWordType.None) {
-        const goodwordComponents = getRegExpComponents(goodword);
-        const data = {
-          word: goodword,
-          normalRegexp: getNormalRegExp(goodwordComponents),
-          strictRegexp: getCircumventionRegExp(goodwordComponents),
-          type: whitelistType,
-        };
+      const whitelistWordData = getWhitelistWordData(goodword, currentBadWordData);
+      if (whitelistWordData) {
         if (whitelistMap[badword]) {
-          whitelistMap[badword].push(data);
+          whitelistMap[badword].push(whitelistWordData);
         } else {
-          whitelistMap[badword] = [data];
+          whitelistMap[badword] = [whitelistWordData];
         }
       }
     }
@@ -384,23 +402,18 @@ export const preprocessWordListOverrideData = (
         continue;
       }
       const badwordData = getBadWordData(badword, defaultWordList.filterOptions);
-      const whitelistType = getWhitelistType(goodword, badwordData);
+
       if (
-        whitelistType !== WhitelistWordType.None && // make sure the word matches the bad word
-        (!defaultWordList.whitelistMap[badword] || // make sure the whitelisted word is not already there
-          defaultWordList.whitelistMap[badword].findIndex((entry) => entry.word === goodword) < 0)
+        !defaultWordList.whitelistMap[badword] || // make sure the whitelisted word is not already there
+        defaultWordList.whitelistMap[badword].findIndex((entry) => entry.word === goodword) < 0
       ) {
-        const goodwordComponents = getRegExpComponents(goodword);
-        const data = {
-          word: goodword,
-          normalRegexp: getNormalRegExp(goodwordComponents),
-          strictRegexp: getCircumventionRegExp(goodwordComponents),
-          type: whitelistType,
-        };
-        if (whitelistEnables[badword]) {
-          whitelistEnables[badword].push(data);
-        } else {
-          whitelistEnables[badword] = [data];
+        const whitelistWordData = getWhitelistWordData(goodword, badwordData);
+        if (whitelistWordData) {
+          if (whitelistEnables[badword]) {
+            whitelistEnables[badword].push(whitelistWordData);
+          } else {
+            whitelistEnables[badword] = [whitelistWordData];
+          }
         }
       }
     }
